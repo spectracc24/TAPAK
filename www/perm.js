@@ -83,7 +83,11 @@ function showPerm(st, hint) {
 }
 
 // ---------- alur ----------
-function onPermOk(st) { if (st.location === 'ok' && typeof startGPS === 'function') startGPS(); }
+function onPermOk(st) {
+  if (st.location === 'ok' && typeof startGPS === 'function') startGPS();
+  // rekaman jejak sudah berjalan tetapi pemantau latar belakang belum aktif (izin baru diberikan)
+  if (st.location === 'ok' && tracking && typeof bgStart === 'function') bgStart();
+}
 
 async function grantClick() {
   if (permBusy) return;

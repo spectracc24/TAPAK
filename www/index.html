@@ -1,7 +1,7 @@
 <!DOCTYPE html><html lang=id><head><meta charset=utf-8>
 <meta name=viewport content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta http-equiv=Content-Security-Policy content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://*.tile.openstreetmap.org https://tile.openstreetmap.org https://*.tile.opentopomap.org https://server.arcgisonline.com; worker-src 'self' blob:; connect-src 'self' data: blob:; object-src 'none'; base-uri 'none'; form-action 'none'">
-<meta name=theme-color content="#14532d"><title>TAPAK</title>
+<meta name=theme-color content="#17324d"><title>TAPAK · Spectra CC</title>
 <link rel=stylesheet href=lib/leaflet.css><link rel=stylesheet href=style.css></head><body>
 <div id=map></div>
 <div id=top>
@@ -24,14 +24,15 @@
  <h2>Selamat datang di TAPAK</h2>
  <p class=step><b>1</b><span><b>Pasang peta</b><br>Tekan <i>Peta</i> → <i>Impor Peta PDF</i> agar bisa dipakai tanpa sinyal.</span></p>
  <p class=step><b>2</b><span><b>Tandai temuan</b><br>Tekan tombol hijau <i>＋ Tambah</i> untuk menandai titik, jalur, atau area.</span></p>
- <p class=step><b>3</b><span><b>Rekam perjalanan</b><br>Tekan <i>Rekam</i> saat mulai patroli, tekan lagi saat selesai.</span></p>
+ <p class=step><b>3</b><span><b>Rekam perjalanan</b><br>Tekan <i>Rekam</i> saat mulai patroli, tekan lagi saat selesai. Tetap merekam walau layar dikunci atau aplikasi diminimalkan.</span></p>
  <button class=big onclick=closeWelcome()>Mulai</button></div></div>
 <div id=splash>
- <svg id=logo viewBox="0 0 100 100"><rect width=100 height=100 rx=22 fill="#14532d"/><circle cx=50 cy=37 r=23 fill="#fff"/><path d="M28.5 46h43L50 77z" fill="#fff"/><circle cx=50 cy=37 r=9 fill="#14532d"/><circle cx=28 cy=88 r=3.5 fill="#f59e0b"/><circle cx=40 cy=90 r=3.5 fill="#f59e0b"/><circle cx=52 cy=88 r=3.5 fill="#f59e0b"/></svg>
- <h1>TAPAK</h1><p>Teknologi Akuisisi dan Pencatatan<br>Hutan Kita</p><em>Every Track Tells a Story.</em></div>
+ <svg id=logo viewBox="0 0 100 100"><rect width=100 height=100 rx=22 fill="#17324d"/><circle cx=50 cy=37 r=23 fill="#fff"/><path d="M28.5 46h43L50 77z" fill="#fff"/><circle cx=50 cy=37 r=9 fill="#17324d"/><circle cx=28 cy=88 r=3.5 fill="#a9c7b4"/><circle cx=40 cy=90 r=3.5 fill="#a9c7b4"/><circle cx=52 cy=88 r=3.5 fill="#a9c7b4"/></svg>
+ <h1>TAPAK</h1><p>Teknologi Akuisisi dan Pencatatan<br>Hutan Kita</p><em>Every Track Tells a Story.</em>
+ <div class=by><small>Dikembangkan oleh</small><img src=img/spectra-cc-logo.png alt="Spectra CC · Citra Cendekia"></div><div class=cbar><i></i><i></i><i></i></div></div>
 <input type=file id=pdfin accept="application/pdf" hidden onchange="importPDF(this.files[0]);this.value=''">
 <input type=file id=cam accept="image/*" capture=environment hidden onchange="addPhoto(this)">
 <input type=file id=gal accept="image/*" hidden onchange="addPhoto(this)">
 <script src=lib/leaflet.js></script><script src=lib/pdf.min.js></script><script src=lib/proj4.js></script>
 <script src=lib/jszip.min.js></script><script src=lib/piexif.js></script><script src=lib/shpwrite.js></script>
-<script src=app.js></script><script src=ui.js></script><script src=perm.js></script></body></html>
+<script src=lib/version.js></script><script src=app.js></script><script src=ui.js></script><script src=perm.js></script></body></html>

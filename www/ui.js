@@ -11,15 +11,14 @@ window.hud=function(){const g=$('#gps');
   h+=`🎯 <b>${esc(target.name)}</b><br>Jarak ${fd(map.distance([fix.lat,fix.lon],[target.lat,target.lon]))} · Arah ${b.toFixed(0)}° ${card(b)}<br><button onclick="target=null;if(tgl)map.removeLayer(tgl);hud()">Batalkan tujuan</button>`}
  if(pick)h+=`${h?'<hr>':''}📌 ${fmt(pick.lat,pick.lng)}<br><button onclick="navigator.clipboard&&navigator.clipboard.writeText('${pick.lat.toFixed(6)}, ${pick.lng.toFixed(6)}');toast('Koordinat disalin')">Salin</button><button onclick="newF('Point',[[pick.lng,pick.lat]])">Tandai</button><button onclick="setTarget(pick.lat,pick.lng,'Titik pilihan')">Tuju ke sini</button><button onclick="pick=null;map.removeLayer(pm);hud()">✕</button>`;
  const e=$('#hud');e.innerHTML=h;e.hidden=!h};
-let t0=0;
 window.trackUI=function(){const b=$('#bt'),t=$('#tbar');b.classList.toggle('rec',tracking);$('#nrect').textContent=tracking?'Berhenti':'Rekam';
  if(tracking){const s=Math.floor((Date.now()-t0)/1e3),p=n=>String(n).padStart(2,'0');t.hidden=false;t.innerHTML=`⏺ Merekam · ${fd(len(tcoords))} · ${p(Math.floor(s/3600))}:${p(Math.floor(s/60)%60)}:${p(s%60)}`}else t.hidden=true};
 setInterval(trackUI,1000);
 {const o=window.onFix;window.onFix=function(){o();trackUI()}}
 window.toggleTrack=function(){
- if(!tracking){tracking=true;tcoords=[];t0=Date.now();tline=L.polyline([],{color:'#16a34a',weight:5}).addTo(map);toast('Rekam jejak dimulai.\nJaga layar tetap menyala.');trackUI()}
- else{if(!confirm('Berhenti merekam dan simpan jejak?'))return;tracking=false;map.removeLayer(tline);const c=tcoords;tcoords=[];trackUI();
-  if(c.length>1)newF('LineString',c,{name:'Jejak '+new Date().toLocaleString('id-ID')});else toast('Jejak terlalu pendek, tidak disimpan')}};
+ if(!tracking){startTrack();toast('Rekam jejak dimulai.\nTetap jalan saat layar dikunci atau TAPAK diminimalkan.');trackUI()}
+ else{if(!confirm('Berhenti merekam dan simpan jejak?'))return;endTrack().then(c=>{trackUI();
+  if(c.length>1)newF('LineString',c,{name:'Jejak '+new Date().toLocaleString('id-ID')});else toast('Jejak terlalu pendek, tidak disimpan')})}};
 window.pDraw=()=>sheet(`<h3>Tambah ke peta</h3><div class=grid>
  ${T('📍','Tandai lokasi saya',"if(!fix||!fix.t){needPerm(['location']);return toast('GPS belum siap')};closeSheet();newF('Point',[[fix.lon,fix.lat]])",'pri')}
  ${T('👆','Tandai titik di peta',"startMode('point')")}${T('〰️','Gambar jalur',"startMode('line')")}${T('⬠','Gambar area',"startMode('polygon')")}
@@ -52,17 +51,20 @@ window.pMenu=function(){const o=(k,a)=>Object.entries(a).map(([v,t])=>`<option v
  <h4>Satuan jarak & luas</h4><select onchange="S.unit=this.value;persist()">${o('unit',{metric:'Meter / Kilometer / Hektar',imperial:'Kaki / Mil / Acre',nautical:'Mil laut'})}</select>
  <h4>Simpan & bagikan data</h4><div class=grid>${T('🌐','GeoJSON','expGJ()')}${T('🌍','KMZ (Google Earth)','expKMZ()')}${T('🗂','SHP (ArcGIS/QGIS)','expSHP()')}</div>
  <p class=mut>Pilih aplikasi tujuan (Files, Drive, WhatsApp, dll).</p>
- <h4>Info</h4><button class=btn onclick=pHelp()>❓ Cara pakai</button><button class=btn onclick=pAbout()>ℹ️ Tentang TAPAK</button>`)};
+ <h4>Info</h4><button class=btn onclick=pHelp()>❓ Cara pakai</button><button class=btn onclick=pAbout()>ℹ️ Tentang TAPAK</button>
+ <p class=foot>TAPAK v${esc(window.APP_VER||'')} · dikembangkan oleh Spectra CC</p>`)};
 window.pHelp=()=>sheet(`<h3>Cara pakai</h3>
  <p><b>📴 Peta tanpa sinyal</b><br>Peta → Impor Peta PDF → pilih berkas GeoPDF dari HP.</p>
  <p><b>📍 Menandai temuan</b><br>Tambah → Tandai lokasi saya. Isi nama dan data, ambil foto, lalu Simpan.</p>
- <p><b>⏺ Merekam jalur patroli</b><br>Tekan Rekam saat mulai, Berhenti saat selesai. Jaga layar tetap menyala.</p>
+ <p><b>⏺ Merekam jalur patroli</b><br>Tekan Rekam saat mulai, Berhenti saat selesai. Rekaman <b>tetap berjalan</b> saat layar dikunci atau TAPAK diminimalkan; notifikasi “TAPAK sedang merekam jejak” akan tampil. Jangan menutup TAPAK dari daftar aplikasi. Di HP Xiaomi, Oppo, Vivo, atau Samsung, atur Baterai TAPAK ke “Tanpa batasan”.</p>
  <p><b>📏 Mengukur</b><br>Tambah → Ukur jarak / Ukur luas, lalu ketuk titik-titik di peta.</p>
  <p><b>🧭 Menuju sebuah titik</b><br>Buka data → Tuju ke sini. Jarak dan arah tampil di atas.</p>
  <p><b>📤 Mengirim data</b><br>Lainnya → pilih GeoJSON, KMZ, atau SHP.</p>
  <p><b>🔤 Ganti format koordinat</b><br>Ketuk kotak koordinat di kiri atas.</p>`);
 window.pAbout=()=>sheet(`<div class=about>${$('#logo').outerHTML}<h3>TAPAK</h3><p><b>Teknologi Akuisisi dan Pencatatan Hutan Kita</b></p><p><em>Every Track Tells a Story.</em></p>
- <p class=mut>Peta, jejak, dan catatan lapangan untuk perlindungan hutan berbasis masyarakat.<br>Bekerja tanpa internet. Versi 1.0</p></div>`);
+ <p class=mut>Peta, jejak, dan catatan lapangan untuk perlindungan hutan berbasis masyarakat.<br>Bekerja tanpa internet. Versi ${esc(window.APP_VER||'')}</p>
+ <div class=byline><small>Dikembangkan oleh</small><div class=lg><img src=img/spectra-cc-logo.png alt=\"Spectra CC · Citra Cendekia\"></div>
+ <p class=mut><b>Spectra Citra Cendekia</b><br>Science into Sustainable Solutions.<br><small>Konsultan geospasial · Terdaftar AHU-015113.AH.01.30 Tahun 2025, Kubu Raya, Kalimantan Barat</small></p></div></div>`);
 setTimeout(()=>$('#splash').classList.add('off'),1700);
 kvg('seen').then(v=>{if(!v)setTimeout(()=>$('#welcome').hidden=false,1800)});
 window.closeWelcome=()=>{$('#welcome').hidden=true;kv.set('seen',1).catch(()=>{})};

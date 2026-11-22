@@ -5,6 +5,8 @@
 
 Aplikasi Android untuk pemetaan, navigasi, dan pencatatan lapangan yang bekerja tanpa internet.
 
+> Dikembangkan oleh **Spectra Citra Cendekia (Spectra CC)** · *Science into Sustainable Solutions.*
+
 ---
 
 ## 1. Tentang Aplikasi
@@ -14,7 +16,8 @@ Aplikasi Android untuk pemetaan, navigasi, dan pencatatan lapangan yang bekerja 
 | **Nama** | TAPAK |
 | **Kepanjangan** | Teknologi Akuisisi dan Pencatatan Hutan Kita |
 | **Tagline** | Every Track Tells a Story. |
-| **Versi** | 1.1.0 |
+| **Versi** | 1.2.0 |
+| **Pengembang** | Spectra Citra Cendekia (Spectra CC) |
 | **ID aplikasi** | `id.tapak.patroli` |
 | **Platform** | Android |
 | **Bahasa antarmuka** | Indonesia |
@@ -26,7 +29,7 @@ TAPAK dibuat sebagai alternatif ringan untuk aplikasi peta lapangan berbayar. Ap
 - **Navigasi dan orientasi peta** memakai posisi GPS, kompas, dan skala.
 - **Peta offline:** impor GeoPDF dari HP, tampil sesuai posisi sebenarnya, dengan pengaturan transparansi.
 - **Peta online gratis** (jalan, kontur, satelit) saat ada internet.
-- **Rekam jejak patroli (tracking):** jarak dan durasi tampil langsung, hasilnya disimpan sebagai jalur.
+- **Rekam jejak patroli (tracking):** jarak dan durasi tampil langsung, hasilnya disimpan sebagai jalur. **Tetap merekam saat layar dikunci atau aplikasi diminimalkan** (layanan latar depan dengan notifikasi permanen), dan jejak yang belum disimpan dipulihkan otomatis bila aplikasi tertutup.
 - **Tandai titik, gambar jalur, dan gambar area** langsung di peta atau dari lokasi GPS.
 - **Ukur jarak dan luas** (metrik, imperial, atau nautika).
 - **Atribut objek:** nama, keterangan, dan data tambahan bebas (jenis, jumlah, kondisi, dan lain-lain).
@@ -49,6 +52,7 @@ TAPAK dibuat sebagai alternatif ringan untuk aplikasi peta lapangan berbayar. Ap
 | `@capacitor/camera` | 6.1.3 | Meminta izin kamera (foto tetap diambil lewat input bawaan) |
 | `@capacitor/filesystem` | ^6.0.1 | Menyimpan berkas ekspor sementara |
 | `@capacitor/share` | ^6.0.2 | Membagikan berkas ekspor |
+| `@capacitor-community/background-geolocation` | 1.2.24 | Rekam jejak di latar belakang (foreground service) |
 | `@capacitor/assets` (dev) | 3.0.5 | Membuat ikon dan splash Android |
 
 **Library peta dan data (versi TAPAK 1.0)** (disalin ke `www/lib` saat build agar jalan offline)
@@ -63,7 +67,7 @@ TAPAK dibuat sebagai alternatif ringan untuk aplikasi peta lapangan berbayar. Ap
 
 **Penyimpanan:** IndexedDB di dalam aplikasi (objek, foto, peta PDF, pengaturan).
 
-**Izin Android:** lokasi (presisi dan perkiraan), kamera, dan internet; ditulis otomatis ke AndroidManifest oleh workflow build. Aplikasi **memeriksa izin setiap dibuka dan setiap kembali ke layar depan**, lalu menampilkan dialog bila ada yang belum diberikan (lihat bagian 6). Pilih foto dari galeri memakai pemilih foto bawaan Android yang tidak memerlukan izin tambahan.
+**Izin Android:** lokasi (presisi dan perkiraan), kamera, internet, layanan latar depan (`FOREGROUND_SERVICE`, `FOREGROUND_SERVICE_LOCATION`), dan notifikasi (`POST_NOTIFICATIONS`); ditulis otomatis ke AndroidManifest oleh workflow build. Aplikasi **memeriksa izin setiap dibuka dan setiap kembali ke layar depan**, lalu menampilkan dialog bila ada yang belum diberikan (lihat bagian 6). Pilih foto dari galeri memakai pemilih foto bawaan Android yang tidak memerlukan izin tambahan.
 
 ## 4. Struktur Repo
 
@@ -71,6 +75,7 @@ TAPAK dibuat sebagai alternatif ringan untuk aplikasi peta lapangan berbayar. Ap
 www/index.html, style.css          Tampilan
 www/app.js, ui.js                   Logika aplikasi
 www/perm.js                         Manajer izin (lokasi, kamera)
+www/img/spectra-cc-logo.png         Logo Spectra CC (dari Brand Guideline v1.0)
 assets/                             Ikon dan splash sumber
 prepare.js                          Menyalin library ke www/lib saat build
 capacitor.config.json               Nama dan ID aplikasi
@@ -87,6 +92,11 @@ package.json, package-lock.json      Dependensi (versi dikunci)
 - **Peta online tidak disimpan** untuk offline. Tanpa internet, hanya peta PDF yang tampil. Pemakaian tile OpenStreetMap harus mengikuti kebijakan penggunaannya.
 
 **Tracking dan GPS**
+
+- **Tracking latar belakang** memakai layanan latar depan Android, sehingga selalu ada notifikasi “TAPAK sedang merekam jejak” selama merekam. Di Android 13+, izinkan notifikasi untuk TAPAK agar tanda ini terlihat (rekaman tetap berjalan walau notifikasi ditolak).
+- `useLegacyBridge: true` di `capacitor.config.json` **jangan dihapus**: tanpa itu, pembaruan lokasi latar belakang berhenti sekitar 5 menit setelah aplikasi diminimalkan.
+- Jangan geser-tutup TAPAK dari daftar aplikasi terbaru saat merekam. Pada HP Xiaomi, Oppo, Vivo, Samsung, dan merek lain dengan penghemat baterai agresif, atur Baterai TAPAK ke **Tanpa batasan**.
+- Rekaman yang terputus (aplikasi ditutup paksa, HP restart) dilanjutkan otomatis saat TAPAK dibuka lagi; bagian yang hilang selama terputus tampak sebagai garis lurus.
 - Fix GPS pertama bisa lama, terutama di dalam bangunan atau di bawah kanopi lebat. Titik dengan akurasi buruk (lebih dari 50 m) tidak dicatat dalam track.
 - Kompas bergantung pada sensor HP dan bisa perlu dikalibrasi. Peta tidak berputar mengikuti arah HP.
 
@@ -117,4 +127,4 @@ Pelaporan kerentanan: lihat `SECURITY.md`.
 
 ## 7. Lisensi dan Atribusi
 
-Peta dasar online: © kontributor OpenStreetMap, OpenTopoMap, dan Esri. Library pihak ketiga memakai lisensi masing-masing (Leaflet BSD-2, pdf.js Apache-2.0, proj4 MIT, JSZip MIT/GPLv3, piexifjs MIT, shp-write BSD). Tentukan lisensi TAPAK sendiri sesuai kebijakan organisasi Anda.
+Peta dasar online: © kontributor OpenStreetMap, OpenTopoMap, dan Esri. Library pihak ketiga memakai lisensi masing-masing (Leaflet BSD-2, pdf.js Apache-2.0, proj4 MIT, JSZip MIT/GPLv3, piexifjs MIT, shp-write BSD). Logo dan identitas visual Spectra CC mengikuti *Brand Identity & Strategic Guideline* v1.0 (Spectra Citra Cendekia, terdaftar AHU-015113.AH.01.30 Tahun 2025). Tentukan lisensi TAPAK sendiri sesuai kebijakan organisasi Anda.

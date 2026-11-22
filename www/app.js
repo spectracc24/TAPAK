@@ -8,7 +8,7 @@ const kv={get:async k=>{const d=await dbp;return new Promise((r,j)=>{const q=d.t
 set:async(k,v)=>{const d=await dbp;return new Promise((r,j)=>{const t=d.transaction('kv','readwrite');t.objectStore('kv').put(v,k);t.oncomplete=()=>r();t.onerror=t.onabort=()=>j(t.error||new Error('Transaksi dibatalkan'))})}};
 const kvg=k=>kv.get(k).catch(e=>{console.error('baca gagal',k,e)});
 let F=[],PM=[],S={coord:'dd',unit:'metric',base:'osm'},mode=null,draft=[],fix=null,tracking=false,tcoords=[],tline,target=null,cur=null,pick=null,hdg=null;
-let saveWarned=false;
+let saveWarned=false,t0=0,bgP=null,trkSaved=0;
 const persist=()=>Promise.all([kv.set('F',F),kv.set('S',S)]).then(()=>{saveWarned=false}).catch(e=>{console.error('simpan gagal',e);if(!saveWarned){saveWarned=true;toast('⚠ Data GAGAL tersimpan (penyimpanan penuh?). Ekspor data Anda sekarang.')}});
 const toast=t=>{const e=$('#toast');e.textContent=t;e.style.display='block';clearTimeout(toast.t);toast.t=setTimeout(()=>e.style.display='none',2800)};
 // ---------- peta ----------
@@ -42,8 +42,9 @@ function brg(a,b){const r=Math.PI/180,dl=(b[1]-a[1])*r,y=Math.sin(dl)*Math.cos(b
 const card=d=>['U','TL','T','TG','S','BD','B','BL'][Math.round(d/45)%8];
 // ---------- GPS, kompas, HUD ----------
 let gpsMsg='Mencari GPS… (pergi ke tempat terbuka)',gpsOn=false;
+const applyFix=(lat,lon,acc,hd,sp)=>{fix={lat,lon,acc,hd,sp,t:Date.now()};kv.set('last',fix).catch(()=>{});onFix()};
 async function startGPS(){const G=C&&C.Plugins&&C.Plugins.Geolocation;
- const cb=p=>{if(!p)return;fix={lat:p.coords.latitude,lon:p.coords.longitude,acc:p.coords.accuracy,hd:p.coords.heading,sp:p.coords.speed,t:Date.now()};kv.set('last',fix).catch(()=>{});onFix()};
+ const cb=p=>{if(p)applyFix(p.coords.latitude,p.coords.longitude,p.coords.accuracy,p.coords.heading,p.coords.speed)};
  if(G&&native){
   if(gpsOn)return;
   let st;try{st=await G.checkPermissions()}catch(e){st={location:'granted'}}
@@ -57,7 +58,7 @@ let gm,gc,tgl;
 function onFix(){const ll=[fix.lat,fix.lon];
  if(!gm){gm=L.circleMarker(ll,{radius:8,color:'#fff',weight:3,fillColor:'#2563eb',fillOpacity:1}).addTo(GL);gc=L.circle(ll,{radius:fix.acc,weight:1,interpolate:0}).addTo(GL)}
  else{gm.setLatLng(ll);gc.setLatLng(ll).setRadius(fix.acc)}
- if(tracking&&fix.acc<=50){const l=tcoords[tcoords.length-1];if(!l||map.distance([l[1],l[0]],ll)>3){tcoords.push([fix.lon,fix.lat]);tline.setLatLngs(tcoords.map(c=>[c[1],c[0]]))}}
+ if(tracking&&fix.acc<=50){const l=tcoords[tcoords.length-1];if(!l||map.distance([l[1],l[0]],ll)>3){tcoords.push([fix.lon,fix.lat]);tline.setLatLngs(tcoords.map(c=>[c[1],c[0]]));saveTrk()}}
  if(fix.hd!=null&&fix.sp>1)setHdg(fix.hd);
  if(target){if(tgl)map.removeLayer(tgl);tgl=L.polyline([ll,[target.lat,target.lon]],{color:'#f59e0b',dashArray:'6'}).addTo(map)}
  hud()}
@@ -71,10 +72,22 @@ function setHdg(h){hdg=h;$('#ar').style.transform=`rotate(${h}deg)`;$('#hd').tex
 addEventListener('deviceorientationabsolute',e=>{if(e.alpha!=null)setHdg((360-e.alpha)%360)},true);
 function locate(){if(fix)map.setView([fix.lat,fix.lon],Math.max(map.getZoom(),16));else toast('GPS belum mendapat sinyal')}
 let pm;function setPick(ll){pick=ll;if(pm)map.removeLayer(pm);pm=L.circleMarker(ll,{radius:7,color:'#7c3aed'}).addTo(map);hud()}
-// ---------- track ----------
-function toggleTrack(){const b=$('#bt');
- if(!tracking){tracking=true;tcoords=[];tline=L.polyline([],{color:'#16a34a',weight:4}).addTo(map);b.classList.add('on');toast('Merekam track (jaga layar tetap menyala)')}
- else{tracking=false;b.classList.remove('on');map.removeLayer(tline);if(tcoords.length>1)newF('LineString',tcoords,{name:'Track '+new Date().toLocaleString('id-ID')});else toast('Track terlalu pendek');tcoords=[]}}
+// ---------- track (tetap merekam saat layar dikunci / aplikasi diminimalkan) ----------
+// Android menghentikan GPS WebView begitu aplikasi di latar belakang. Maka saat merekam, TAPAK menjalankan
+// layanan latar depan (foreground service) lewat plugin @capacitor-community/background-geolocation,
+// dengan notifikasi permanen. Titik juga disimpan ke IndexedDB berkala agar jejak selamat bila aplikasi tertutup.
+const BG=()=>native&&C.Plugins&&(C.Plugins.BackgroundGeolocation||(C.registerPlugin&&C.registerPlugin('BackgroundGeolocation')));
+function bgStart(){const B=BG();if(!B){if(native)toast('Rekam latar belakang tidak tersedia di build ini');return}
+ if(bgP)return;
+ bgP=B.addWatcher({backgroundTitle:'TAPAK sedang merekam jejak',backgroundMessage:'Spectra CC · Ketuk untuk membuka TAPAK',requestPermissions:false,stale:false,distanceFilter:3},(l,e)=>{
+  if(e){if(e.code==='NOT_AUTHORIZED'){toast('Izin lokasi diperlukan agar rekaman tetap jalan di latar belakang');bgStop()}return}
+  if(l)applyFix(l.latitude,l.longitude,l.accuracy,l.bearing,l.speed)}).catch(err=>{bgP=null;console.error('bg watcher',err);toast('Rekam di latar belakang gagal aktif. Biarkan TAPAK tetap terbuka.')})}
+async function bgStop(){const B=BG(),p=bgP;bgP=null;if(!B||!p)return;try{const id=await p;if(id!=null)await B.removeWatcher({id})}catch(e){console.error('bg stop',e)}}
+function saveTrk(force){const n=Date.now();if(!force&&n-trkSaved<8000)return;trkSaved=n;kv.set('trk',{t0,coords:tcoords}).catch(()=>{})}
+function startTrack(c,t){tracking=true;tcoords=c||[];t0=t||Date.now();if(tline)map.removeLayer(tline);
+ tline=L.polyline(tcoords.map(p=>[p[1],p[0]]),{color:'#158b90',weight:5}).addTo(map);saveTrk(true);bgStart()}
+async function endTrack(){tracking=false;if(tline){map.removeLayer(tline);tline=null}const c=tcoords;tcoords=[];await bgStop();trkSaved=0;kv.set('trk',null).catch(()=>{});return c}
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden'&&tracking)saveTrk(true)});
 // ---------- menggambar & mengukur ----------
 const sheet=h=>{const s=$('#sheet');s.innerHTML='<div class=grab></div><button class=x onclick=closeSheet()>✕</button>'+h;s.hidden=false;s.scrollTop=0},closeSheet=()=>{$('#sheet').hidden=true};
 function startMode(m){closeSheet();mode=m;draft=[];DG.clearLayers();$('#dbar').hidden=false;$('#dinfo').textContent=m=='point'?'Ketuk peta untuk menaruh titik':'Ketuk peta untuk menambah vertex'}
@@ -183,8 +196,8 @@ async function out(name,blob){const b64=await new Promise(r=>{const fr=new FileR
 const geom=f=>({type:f.type,coordinates:f.type=='Point'?f.coords[0]:f.type=='Polygon'?[[...f.coords,f.coords[0]]]:f.coords});
 const gj=(trunc)=>({type:'FeatureCollection',features:F.map(f=>{const p={nama:f.props.name,deskripsi:f.props.desc};
  for(const[k,v]of Object.entries(f.props.custom))p[trunc?k.slice(0,10):k]=v;p[trunc?'foto':'foto']=f.photos.map(x=>x.name).join(';');return{type:'Feature',properties:p,geometry:geom(f)}})});
-const expGJ=()=>out('patroli.geojson',new Blob([JSON.stringify(gj(),null,1)],{type:'application/geo+json'}));
-async function expKMZ(){const z=new JSZip();let k='<?xml version="1.0" encoding="UTF-8"?><kml xmlns="http://www.opengis.net/kml/2.2"><Document><name>Patroli</name><Style id="s"><LineStyle><color>ff481de1</color><width>3</width></LineStyle><PolyStyle><color>55481de1</color></PolyStyle></Style>';
+const expGJ=()=>out('patroli.geojson',new Blob([JSON.stringify({...gj(),generator:'TAPAK - Spectra CC (Spectra Citra Cendekia)'},null,1)],{type:'application/geo+json'}));
+async function expKMZ(){const z=new JSZip();let k='<?xml version="1.0" encoding="UTF-8"?><kml xmlns="http://www.opengis.net/kml/2.2"><Document><name>Patroli</name><description>Dibuat dengan TAPAK · Spectra CC (Spectra Citra Cendekia)</description><Style id="s"><LineStyle><color>ff481de1</color><width>3</width></LineStyle><PolyStyle><color>55481de1</color></PolyStyle></Style>';
  F.forEach(f=>{const co=f.coords.map(c=>c[0]+','+c[1]+',0').join(' '),g=f.type=='Point'?`<Point><coordinates>${co}</coordinates></Point>`:f.type=='LineString'?`<LineString><coordinates>${co}</coordinates></LineString>`:`<Polygon><outerBoundaryIs><LinearRing><coordinates>${co} ${f.coords[0][0]},${f.coords[0][1]},0</coordinates></LinearRing></outerBoundaryIs></Polygon>`;
  const ed=Object.entries(f.props.custom).map(([a,b])=>`<Data name="${esc(a)}"><value>${esc(b)}</value></Data>`).join('');
  const im=f.photos.map(p=>{z.file('files/'+p.name,p.data.split(',')[1],{base64:true});return`<img src="files/${p.name}" width="400"/>`}).join('');
@@ -195,4 +208,5 @@ async function expSHP(){if(!window.shpwrite)return toast('Modul SHP tidak termua
  F.forEach(f=>f.photos.forEach(p=>z.file('patroli/foto/'+p.name,p.data.split(',')[1],{base64:true})));out('patroli_shp.zip',await z.generateAsync({type:'blob'}))}catch(e){toast('SHP gagal: '+e.message)}}
 // ---------- start ----------
 (async()=>{try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist()}catch(e){}purgeExports();
-S={...S,...(await kvg('S')||{})};F=await kvg('F')||[];const last=await kvg('last');if(last){fix={...last,t:0};map.setView([last.lat,last.lon],14);gpsMsg='Posisi terakhir diketahui; menunggu GPS…'}PM=await kvg('PM')||[];setBase(S.base);draw();PM.forEach(showPM);startGPS();hud()})();
+S={...S,...(await kvg('S')||{})};F=await kvg('F')||[];const last=await kvg('last');if(last){fix={...last,t:0};map.setView([last.lat,last.lon],14);gpsMsg='Posisi terakhir diketahui; menunggu GPS…'}PM=await kvg('PM')||[];setBase(S.base);draw();PM.forEach(showPM);startGPS();hud();
+const tk=await kvg('trk');if(tk&&tk.coords&&tk.coords.length){startTrack(tk.coords,tk.t0);if(window.trackUI)trackUI();toast('Rekaman jejak sebelumnya dilanjutkan ('+tk.coords.length+' titik)')}})();

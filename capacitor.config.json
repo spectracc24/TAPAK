@@ -4,6 +4,7 @@
   "webDir": "www",
   "android": {
     "allowMixedContent": false,
-    "webContentsDebuggingEnabled": false
+    "webContentsDebuggingEnabled": false,
+    "useLegacyBridge": true
   }
 }
