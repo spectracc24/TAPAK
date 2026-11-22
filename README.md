@@ -1,0 +1,120 @@
+# TAPAK
+
+**Teknologi Akuisisi dan Pencatatan Hutan Kita**
+*Every Track Tells a Story.*
+
+Aplikasi Android untuk pemetaan, navigasi, dan pencatatan lapangan yang bekerja tanpa internet.
+
+---
+
+## 1. Tentang Aplikasi
+
+| | |
+|---|---|
+| **Nama** | TAPAK |
+| **Kepanjangan** | Teknologi Akuisisi dan Pencatatan Hutan Kita |
+| **Tagline** | Every Track Tells a Story. |
+| **Versi** | 1.1.0 |
+| **ID aplikasi** | `id.tapak.patroli` |
+| **Platform** | Android |
+| **Bahasa antarmuka** | Indonesia |
+
+TAPAK dibuat sebagai alternatif ringan untuk aplikasi peta lapangan berbayar. Aplikasi ini memakai peta PDF berreferensi geografis (GeoPDF), misalnya hasil ekspor ArcMap atau QGIS, sebagai peta dasar saat tidak ada sinyal. Data yang dikumpulkan tersimpan di HP dan dapat diekspor ke format standar GIS.
+
+## 2. Kegunaan
+
+- **Navigasi dan orientasi peta** memakai posisi GPS, kompas, dan skala.
+- **Peta offline:** impor GeoPDF dari HP, tampil sesuai posisi sebenarnya, dengan pengaturan transparansi.
+- **Peta online gratis** (jalan, kontur, satelit) saat ada internet.
+- **Rekam jejak patroli (tracking):** jarak dan durasi tampil langsung, hasilnya disimpan sebagai jalur.
+- **Tandai titik, gambar jalur, dan gambar area** langsung di peta atau dari lokasi GPS.
+- **Ukur jarak dan luas** (metrik, imperial, atau nautika).
+- **Atribut objek:** nama, keterangan, dan data tambahan bebas (jenis, jumlah, kondisi, dan lain-lain).
+- **Foto lampiran dengan geotag:** koordinat dituliskan ke EXIF foto. Foto kamera dan galeri sama-sama didukung.
+- **Navigasi ke titik tujuan:** jarak dan arah dari posisi saat ini.
+- **Sistem koordinat:** derajat desimal (WGS84), derajat-menit-detik, dan UTM. Ketuk kotak koordinat di kiri atas untuk berganti.
+- **Ekspor data:** GeoJSON, KMZ (foto ikut), dan SHP dalam zip (foto ikut), dibagikan lewat menu Share Android.
+
+## 3. Teknologi dan Package
+
+**Kerangka aplikasi**
+- Aplikasi web (HTML, CSS, JavaScript tanpa framework) yang dibungkus menjadi APK dengan **Capacitor 6**.
+- Build APK otomatis di **GitHub Actions** (Ubuntu, Java 17 Temurin, Gradle).
+
+**Package Capacitor (versi TAPAK 1.1, dikunci di `package-lock.json`)**
+| Package | Versi | Fungsi |
+|---|---|---|
+| `@capacitor/core`, `cli`, `android` | 6.2.3 | Pembungkus aplikasi menjadi APK |
+| `@capacitor/geolocation` | 6.1.1 | GPS dan izin lokasi |
+| `@capacitor/camera` | 6.1.3 | Meminta izin kamera (foto tetap diambil lewat input bawaan) |
+| `@capacitor/filesystem` | ^6.0.1 | Menyimpan berkas ekspor sementara |
+| `@capacitor/share` | ^6.0.2 | Membagikan berkas ekspor |
+| `@capacitor/assets` (dev) | 3.0.5 | Membuat ikon dan splash Android |
+
+**Library peta dan data (versi TAPAK 1.0)** (disalin ke `www/lib` saat build agar jalan offline)
+| Library | Versi | Fungsi |
+|---|---|---|
+| Leaflet | 1.9.4 | Mesin peta |
+| pdf.js (`pdfjs-dist`) | 3.11.174 | Membaca dan merender PDF |
+| proj4 | 2.9.2 | Konversi koordinat (UTM) |
+| JSZip | 3.10.1 | Membuat berkas KMZ dan ZIP |
+| piexifjs | 1.0.6 | Menulis dan membaca geotag EXIF foto |
+| @mapbox/shp-write | 0.4.3 | Membuat Shapefile |
+
+**Penyimpanan:** IndexedDB di dalam aplikasi (objek, foto, peta PDF, pengaturan).
+
+**Izin Android:** lokasi (presisi dan perkiraan), kamera, dan internet; ditulis otomatis ke AndroidManifest oleh workflow build. Aplikasi **memeriksa izin setiap dibuka dan setiap kembali ke layar depan**, lalu menampilkan dialog bila ada yang belum diberikan (lihat bagian 6). Pilih foto dari galeri memakai pemilih foto bawaan Android yang tidak memerlukan izin tambahan.
+
+## 4. Struktur Repo
+
+```
+www/index.html, style.css          Tampilan
+www/app.js, ui.js                   Logika aplikasi
+www/perm.js                         Manajer izin (lokasi, kamera)
+assets/                             Ikon dan splash sumber
+prepare.js                          Menyalin library ke www/lib saat build
+capacitor.config.json               Nama dan ID aplikasi
+package.json, package-lock.json      Dependensi (versi dikunci)
+.github/workflows/build.yml         Build APK otomatis
+```
+
+## 5. Catatan
+
+**Peta**
+- **Impor GeoPDF** membaca data georeferensi dari PDF lalu menyesuaikannya dengan peta. Hanya **halaman pertama** yang dibaca. PDF yang georeferensinya tersimpan terkompresi, atau PDF biasa tanpa georeferensi, akan ditolak dengan pesan error. Saat ekspor dari ArcMap, centang **"Export Map Georeference Information"**.
+- Pada peta yang sangat luas bisa ada selisih posisi kecil. Cek posisi GPS pada fitur yang dikenal sebelum dipakai.
+- Peta PDF sangat besar dirender dengan resolusi dibatasi, sehingga detail halus bisa berkurang.
+- **Peta online tidak disimpan** untuk offline. Tanpa internet, hanya peta PDF yang tampil. Pemakaian tile OpenStreetMap harus mengikuti kebijakan penggunaannya.
+
+**Tracking dan GPS**
+- Fix GPS pertama bisa lama, terutama di dalam bangunan atau di bawah kanopi lebat. Titik dengan akurasi buruk (lebih dari 50 m) tidak dicatat dalam track.
+- Kompas bergantung pada sensor HP dan bisa perlu dikalibrasi. Peta tidak berputar mengikuti arah HP.
+
+**Data dan ekspor**
+- Tidak ada fitur impor GeoJSON, KML, atau SHP, dan tidak ada pengeditan titik (vertex) setelah objek disimpan.
+- Foto diperkecil maksimal 1600 px dan disimpan di dalam aplikasi, jadi banyak foto menambah ukuran data.
+- Shapefile membatasi nama atribut maksimal 10 karakter, dan koordinatnya WGS84.
+- Satu objek hanya bertipe titik, jalur, atau area. Tidak ada lapisan (layer) terpisah.
+
+**Distribusi**
+- Tanpa keystore, workflow hanya membuat APK **debug** (bertanda `DEBUG-jangan-dibagikan`). Untuk dibagikan, isi secrets penandatanganan di bagian 6.
+- Belum diuji pada semua merek dan versi Android. Uji di beberapa HP sebelum dipakai luas.
+
+## 6. Keamanan, Izin, dan Penandatanganan APK
+
+**Izin aplikasi.** `www/perm.js` memeriksa izin lokasi presisi dan kamera saat aplikasi dibuka dan setiap kali kembali aktif. Jika belum diberikan, tampil dialog dengan tombol *Berikan izin*. Bila Android sudah menolak permanen, dialog menampilkan petunjuk membuka Pengaturan; begitu pengguna kembali, izin dicek ulang otomatis. Fitur rekam jejak dan kamera juga meminta izin saat dipakai. Ubah `PERM_STRICT = true` di `perm.js` untuk menyembunyikan tombol *Nanti saja*.
+
+**Penandatanganan rilis (sekali saja).**
+1. Buat kunci: `keytool -genkeypair -v -keystore tapak.jks -alias tapak -keyalg RSA -keysize 4096 -validity 10000`
+2. Simpan `tapak.jks` di tempat aman **di luar repo** dan buat cadangannya. Kunci hilang = APK tidak bisa diperbarui.
+3. Encode: `base64 -w0 tapak.jks`
+4. Di GitHub: Settings → Secrets and variables → Actions, tambahkan `ANDROID_KEYSTORE_B64`, `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS`, `ANDROID_KEY_PASSWORD`.
+5. Setiap push kini menghasilkan APK rilis bertanda tangan dan `SHA256SUMS.txt`. Cocokkan checksum sebelum membagikan. `versionCode` naik otomatis sehingga APK baru dapat menimpa versi lama tanpa menghapus data.
+
+**Kebijakan Android untuk APK di luar Play Store.** Google mulai mewajibkan verifikasi developer secara bertahap, termasuk di Indonesia sejak akhir September 2026. Periksa persyaratan terbaru di developer.android.com/developer-verification sebelum membagikan APK ke banyak pengguna.
+
+Pelaporan kerentanan: lihat `SECURITY.md`.
+
+## 7. Lisensi dan Atribusi
+
+Peta dasar online: © kontributor OpenStreetMap, OpenTopoMap, dan Esri. Library pihak ketiga memakai lisensi masing-masing (Leaflet BSD-2, pdf.js Apache-2.0, proj4 MIT, JSZip MIT/GPLv3, piexifjs MIT, shp-write BSD). Tentukan lisensi TAPAK sendiri sesuai kebijakan organisasi Anda.

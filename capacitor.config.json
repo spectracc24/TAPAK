@@ -1,0 +1,9 @@
+{
+  "appId": "id.tapak.patroli",
+  "appName": "TAPAK",
+  "webDir": "www",
+  "android": {
+    "allowMixedContent": false,
+    "webContentsDebuggingEnabled": false
+  }
+}
