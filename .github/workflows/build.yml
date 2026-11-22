@@ -24,7 +24,7 @@ jobs:
 
       - name: Buat ikon & splash TAPAK
         continue-on-error: true
-        run: npx capacitor-assets generate --android --iconBackgroundColor '#17324d' --iconBackgroundColorDark '#17324d' --splashBackgroundColor '#17324d' --splashBackgroundColorDark '#17324d'
+        run: npx capacitor-assets generate --android --iconBackgroundColor '#14532d' --iconBackgroundColorDark '#14532d' --splashBackgroundColor '#14532d' --splashBackgroundColorDark '#14532d'
 
       - name: Atur izin & keamanan AndroidManifest
         run: |
@@ -32,7 +32,7 @@ jobs:
           import re, sys
           p='android/app/src/main/AndroidManifest.xml'
           s=open(p).read()
-          perms=['INTERNET','ACCESS_NETWORK_STATE','ACCESS_FINE_LOCATION','ACCESS_COARSE_LOCATION','CAMERA','READ_MEDIA_IMAGES','FOREGROUND_SERVICE','FOREGROUND_SERVICE_LOCATION','POST_NOTIFICATIONS']
+          perms=['INTERNET','ACCESS_NETWORK_STATE','ACCESS_FINE_LOCATION','ACCESS_COARSE_LOCATION','CAMERA','READ_MEDIA_IMAGES']
           add=''.join(f'    <uses-permission android:name="android.permission.{x}" />\n' for x in perms if f'android.permission.{x}"' not in s)
           add+='    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />\n'
           add+='    <uses-feature android:name="android.hardware.camera" android:required="false" />\n'
@@ -51,19 +51,6 @@ jobs:
           assert 'usesCleartextTraffic="false"' in s, 'cleartext gagal dimatikan'
           PY
           grep -E "uses-(permission|feature)|allowBackup|usesCleartext" android/app/src/main/AndroidManifest.xml
-
-      - name: Atur tampilan notifikasi rekam latar belakang (warna & nama kanal Spectra CC)
-        run: |
-          python3 - <<'PY'
-          p='android/app/src/main/res/values/strings.xml'
-          s=open(p).read()
-          add=('    <string name="capacitor_background_geolocation_notification_channel_name">Rekam jejak TAPAK</string>\n'
-               '    <string name="capacitor_background_geolocation_notification_color">#158B90</string>\n')
-          assert '</resources>' in s, 'strings.xml tidak valid'
-          s=s.replace('</resources>',add+'</resources>',1)
-          open(p,'w').write(s)
-          PY
-          cat android/app/src/main/res/values/strings.xml
 
       - name: Atur versi (versionCode naik tiap build agar APK bisa menimpa versi lama)
         run: |
