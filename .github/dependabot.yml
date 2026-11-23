@@ -1,9 +1,30 @@
+# version: 2
+# updates:
+#   - package-ecosystem: npm
+#     directory: /
+#     schedule: {interval: weekly}
+#     open-pull-requests-limit: 5
+#   - package-ecosystem: github-actions
+#     directory: /
+#     schedule: {interval: weekly}
 version: 2
 updates:
   - package-ecosystem: npm
     directory: /
     schedule: {interval: weekly}
     open-pull-requests-limit: 5
+    groups:
+      capacitor:
+        patterns:
+          - "@capacitor/*"
+          - "@capacitor-community/*"
+    ignore:
+      # pdf.js 4+ berformat ESM; kode TAPAK memakai build klasik 3.x
+      - dependency-name: pdfjs-dist
+        update-types: ["version-update:semver-major"]
+      # Capacitor lompat mayor secara manual, bukan otomatis
+      - dependency-name: "@capacitor/*"
+        update-types: ["version-update:semver-major"]
   - package-ecosystem: github-actions
     directory: /
     schedule: {interval: weekly}
