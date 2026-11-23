@@ -24,7 +24,7 @@
     "@mapbox/shp-write": "0.4.3",
     "jszip": "3.10.1",
     "leaflet": "1.9.4",
-    "pdfjs-dist": "3.11.174",
+    "pdfjs-dist": "6.5.438",
     "piexifjs": "1.0.6",
     "proj4": "2.9.2"
   },
