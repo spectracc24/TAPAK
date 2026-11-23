@@ -25,7 +25,7 @@
   const REF = /\s+(\d+)\s+R(?![A-Za-z0-9])/y;
   const NAME = /[^\s\/\[\]<>()%{}]*/y;
   function ws(s, i) {
-    for (;;) {
+    for (; ;) {
       const c = s.charCodeAt(i);
       if (c === 37) { while (i < s.length && s.charCodeAt(i) !== 10 && s.charCodeAt(i) !== 13) i++; continue; }
       if (c <= 32) { if (i >= s.length) return i; i++; continue; }
@@ -39,7 +39,7 @@
     const c = s[i];
     if (c === '<' && s[i + 1] === '<') {
       i += 2; const o = {};
-      for (;;) {
+      for (; ;) {
         i = ws(s, i);
         if (i >= s.length) return [o, i];
         if (s[i] === '>' && s[i + 1] === '>') return [o, i + 2];
@@ -50,7 +50,7 @@
     }
     if (c === '[') {
       i++; const a = [];
-      for (;;) {
+      for (; ;) {
         i = ws(s, i);
         if (i >= s.length) return [a, i];
         if (s[i] === ']') return [a, i + 1];
@@ -148,13 +148,26 @@
       const key = bbox.join(',') + '|' + g.join(',');
       if (seen.has(key)) return; seen.add(key);
       const gcs = res(m.GCS) || {};
-      const name = res(v.Name); 
+      const name = res(v.Name);
       found.push({
-        bbox: [Math.min(bbox[0], bbox[2]), Math.min(bbox[1], bbox[3]), Math.max(bbox[0], bbox[2]), Math.max(bbox[1], bbox[3])],
+        bboxRaw: bbox.slice(0, 4),
+        bbox: [
+            Math.min(bbox[0], bbox[2]),
+            Math.min(bbox[1], bbox[3]),
+            Math.max(bbox[0], bbox[2]),
+            Math.max(bbox[1], bbox[3])
+        ],
+        // bbox: [Math.min(bbox[0], bbox[2]), Math.min(bbox[1], bbox[3]), Math.max(bbox[0], bbox[2]), Math.max(bbox[1], bbox[3])],
         gpts: g, lpts: l,
         gcs: { type: gcs.Type && gcs.Type.n, epsg: typeof res(gcs.EPSG) === 'number' ? res(gcs.EPSG) : null, wkt: res(gcs.WKT) && res(gcs.WKT).s || null },
         name: name && name.s || null
       });
+      // found.push({
+      //   bbox: [Math.min(bbox[0], bbox[2]), Math.min(bbox[1], bbox[3]), Math.max(bbox[0], bbox[2]), Math.max(bbox[1], bbox[3])],
+      //   gpts: g, lpts: l,
+      //   gcs: { type: gcs.Type && gcs.Type.n, epsg: typeof res(gcs.EPSG) === 'number' ? res(gcs.EPSG) : null, wkt: res(gcs.WKT) && res(gcs.WKT).s || null },
+      //   name: name && name.s || null
+      // });
     };
     let scoped = false;
     if (pageNum != null && objs.has(pageNum)) {
@@ -228,7 +241,8 @@
   function buildModel(vp) {
     const pts = [], ll = [];
     for (let i = 0; i < vp.gpts.length / 2; i++) ll.push([vp.gpts[2 * i + 1], vp.gpts[2 * i]]); // GPTS = lat lon
-    const [x0, y0, x1, y1] = vp.bbox;
+    // const [x0, y0, x1, y1] = vp.bbox;
+    const [x0, y0, x1, y1] = vp.bboxRaw || vp.bbox;
     const pg = []; for (let i = 0; i < vp.lpts.length / 2; i++) pg.push([x0 + vp.lpts[2 * i] * (x1 - x0), y0 + vp.lpts[2 * i + 1] * (y1 - y0)]);
     if (ll.some(p => Math.abs(p[1]) > 90 || Math.abs(p[0]) > 360)) throw 'Koordinat georeferensi di luar jangkauan lintang/bujur (GPTS bukan derajat?)';
     let crs = makeCRS(vp.gcs, ll), exact = true, warn = null;
