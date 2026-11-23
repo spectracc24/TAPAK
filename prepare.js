@@ -10,12 +10,24 @@ const files = [
   'proj4/dist/proj4.js', 'jszip/dist/jszip.min.js',
   'piexifjs/piexif.js', '@mapbox/shp-write/shpwrite.js'
 ];
+// Font identitas Spectra CC (Manrope untuk judul, Inter untuk isi), disalin agar tampil tanpa internet
+const fonts = [
+  '@fontsource/manrope/files/manrope-latin-500-normal.woff2', '@fontsource/manrope/files/manrope-latin-700-normal.woff2',
+  '@fontsource/manrope/files/manrope-latin-800-normal.woff2',
+  '@fontsource/inter/files/inter-latin-400-normal.woff2', '@fontsource/inter/files/inter-latin-500-normal.woff2',
+  '@fontsource/inter/files/inter-latin-600-normal.woff2'
+];
+fs.mkdirSync('www/lib/fonts', { recursive: true });
 let gagal = 0;
 for (const f of files) {
   try { fs.copyFileSync(n + f, 'www/lib/' + p.basename(f)); console.log('ok', f); }
   catch (e) { gagal++; console.error('GAGAL', f, '-', e.message); }
 }
-if (gagal) { console.error(`\n${gagal} library gagal disalin. Build dihentikan.`); process.exit(1); }
+for (const f of fonts) {
+  try { fs.copyFileSync(n + f, 'www/lib/fonts/' + p.basename(f)); console.log('ok', f); }
+  catch (e) { gagal++; console.error('GAGAL', f, '-', e.message); }
+}
+if (gagal) { console.error(`\n${gagal} berkas gagal disalin. Build dihentikan.`); process.exit(1); }
 
 // Tulis versi aplikasi dari package.json agar layar "Tentang" selalu cocok dengan versi APK.
 const v = require('./package.json').version;

@@ -16,7 +16,7 @@ Aplikasi Android untuk pemetaan, navigasi, dan pencatatan lapangan yang bekerja 
 | **Nama** | TAPAK |
 | **Kepanjangan** | Teknologi Akuisisi dan Pencatatan Hutan Kita |
 | **Tagline** | Every Track Tells a Story. |
-| **Versi** | 1.2.0 |
+| **Versi** | 1.3.0 |
 | **Pengembang** | Spectra Citra Cendekia (Spectra CC) |
 | **ID aplikasi** | `id.tapak.patroli` |
 | **Platform** | Android |
@@ -41,19 +41,20 @@ TAPAK dibuat sebagai alternatif ringan untuk aplikasi peta lapangan berbayar. Ap
 ## 3. Teknologi dan Package
 
 **Kerangka aplikasi**
-- Aplikasi web (HTML, CSS, JavaScript tanpa framework) yang dibungkus menjadi APK dengan **Capacitor 6**.
-- Build APK otomatis di **GitHub Actions** (Ubuntu, Java 17 Temurin, Gradle).
+- Aplikasi web (HTML, CSS, JavaScript tanpa framework) yang dibungkus menjadi APK dengan **Capacitor 8**.
+- Build APK otomatis di **GitHub Actions** (Ubuntu, Node 22, Java 21 Temurin, Gradle 8.14, Android SDK 36).
 
-**Package Capacitor (versi TAPAK 1.1, dikunci di `package-lock.json`)**
+**Package Capacitor (versi TAPAK 1.3, dikunci di `package-lock.json`)**
 | Package | Versi | Fungsi |
 |---|---|---|
-| `@capacitor/core`, `cli`, `android` | 6.2.3 | Pembungkus aplikasi menjadi APK |
-| `@capacitor/geolocation` | 6.1.1 | GPS dan izin lokasi |
-| `@capacitor/camera` | 6.1.3 | Meminta izin kamera (foto tetap diambil lewat input bawaan) |
-| `@capacitor/filesystem` | ^6.0.1 | Menyimpan berkas ekspor sementara |
-| `@capacitor/share` | ^6.0.2 | Membagikan berkas ekspor |
-| `@capacitor-community/background-geolocation` | 1.2.24 | Rekam jejak di latar belakang (foreground service) |
-| `@capacitor/assets` (dev) | 3.0.5 | Membuat ikon dan splash Android |
+| `@capacitor/core`, `cli`, `android` | 8.6.2 | Pembungkus aplikasi menjadi APK |
+| `@capacitor/geolocation` | 8.2.5 | GPS dan izin lokasi |
+| `@capacitor/camera` | 8.2.6 | Meminta izin kamera (foto tetap diambil lewat input bawaan) |
+| `@capacitor/filesystem` | 8.1.5 | Menyimpan berkas ekspor sementara |
+| `@capacitor/share` | 8.0.3 | Membagikan berkas ekspor |
+| `@capacitor-community/background-geolocation` | 1.3.1 | Rekam jejak di latar belakang (foreground service) |
+| `@capacitor/assets` (dev) | 4.0.0 |
+| `@fontsource/manrope`, `@fontsource/inter` | 5.3.0 | Font identitas Spectra CC, disalin ke `www/lib/fonts` (tampil offline) | Membuat ikon dan splash Android |
 
 **Library peta dan data (versi TAPAK 1.0)** (disalin ke `www/lib` saat build agar jalan offline)
 | Library | Versi | Fungsi |
@@ -72,10 +73,13 @@ TAPAK dibuat sebagai alternatif ringan untuk aplikasi peta lapangan berbayar. Ap
 ## 4. Struktur Repo
 
 ```
-www/index.html, style.css          Tampilan
-www/app.js, ui.js                   Logika aplikasi
+www/index.html, style.css          Tampilan (token, ikon, dan komponen mengikuti situs Spectra CC)
+www/app.js, ui.js                   Logika aplikasi dan panel
+www/georef.js                       Georeferensi GeoPDF (parser, proyeksi, warp); diuji di test/
+test/georef.test.js                 Uji otomatis georeferensi (npm test; dijalankan juga di GitHub Actions)
+tools/make-assets.js                Membuat ikon dan splash dari logo vektor Spectra CC (npm run assets)
+assets/android/ic_tracking.xml      Ikon notifikasi rekam jejak (monokrom)
 www/perm.js                         Manajer izin (lokasi, kamera)
-www/img/spectra-cc-logo.png         Logo Spectra CC (dari Brand Guideline v1.0)
 assets/                             Ikon dan splash sumber
 prepare.js                          Menyalin library ke www/lib saat build
 capacitor.config.json               Nama dan ID aplikasi
@@ -86,7 +90,8 @@ package.json, package-lock.json      Dependensi (versi dikunci)
 ## 5. Catatan
 
 **Peta**
-- **Impor GeoPDF** membaca data georeferensi dari PDF lalu menyesuaikannya dengan peta. Hanya **halaman pertama** yang dibaca. PDF yang georeferensinya tersimpan terkompresi, atau PDF biasa tanpa georeferensi, akan ditolak dengan pesan error. Saat ekspor dari ArcMap, centang **"Export Map Georeference Information"**.
+- **Impor GeoPDF** (`www/georef.js`) membaca georeferensi ISO 32000 (`/Measure /GEO`) dari **halaman pertama**. Sejak v1.3: (1) proyeksi asli peta (UTM, geografis, atau WKT/EPSG lain) dibaca lalu tiap piksel di-warp secara eksak ke Web Mercator, tidak lagi memakai satu transformasi affine langsung; (2) bila PDF punya beberapa viewport (peta utama + inset), bingkai terluas yang dipakai; (3) objek PDF dalam object stream terkompresi (PDF 1.5+) ikut terbaca; (4) kartu peta menampilkan proyeksi, galat titik kontrol, dan resolusi. PDF tanpa georeferensi tetap ditolak. Saat ekspor dari ArcMap, centang **"Export Map Georeference Information"**; di QGIS, **"Create Geospatial PDF"**.
+- **Datum:** titik kontrol GPTS diperlakukan sebagai WGS84. Peta dengan datum lokal lain (mis. ID74) bisa bergeser sampai puluhan meter; pakai **Geser** di kartu peta PDF untuk kalibrasi, dan **Salin info georeferensi** untuk menelusuri sebab.
 - Pada peta yang sangat luas bisa ada selisih posisi kecil. Cek posisi GPS pada fitur yang dikenal sebelum dipakai.
 - Peta PDF sangat besar dirender dengan resolusi dibatasi, sehingga detail halus bisa berkurang.
 - **Peta online tidak disimpan** untuk offline. Tanpa internet, hanya peta PDF yang tampil. Pemakaian tile OpenStreetMap harus mengikuti kebijakan penggunaannya.

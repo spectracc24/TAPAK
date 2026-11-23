@@ -16,9 +16,9 @@
 const PERM_STRICT = false;
 
 const PERMS = [
-  { id: 'location', ic: '📍', nama: 'Lokasi presisi (GPS)', plugin: 'Geolocation', key: 'location',
+  { id: 'location', ic: 'pin', nama: 'Lokasi presisi (GPS)', plugin: 'Geolocation', key: 'location',
     guna: 'Menampilkan posisi Anda, merekam jejak patroli, dan memberi koordinat pada temuan.' },
-  { id: 'camera', ic: '📷', nama: 'Kamera', plugin: 'Camera', key: 'camera',
+  { id: 'camera', ic: 'camera', nama: 'Kamera', plugin: 'Camera', key: 'camera',
     guna: 'Mengambil foto temuan langsung di lapangan.' }
 ];
 
@@ -26,7 +26,6 @@ const HINT_SETTINGS = 'Izin masih ditolak. Android berhenti menampilkan perminta
   'Buka <b>Pengaturan HP → Aplikasi → TAPAK → Izin</b>, pilih “Izinkan” ' +
   '(untuk Lokasi: aktifkan juga “Gunakan lokasi presisi”), lalu kembali ke TAPAK.';
 
-const plug = n => window.Capacitor && Capacitor.Plugins && Capacitor.Plugins[n];
 let permBusy = false, lastEnd = 0, lastCheck = 0;
 
 // 'ok' = diizinkan, 'no' = belum/ditolak, 'na' = tidak bisa dicek (tidak memblokir)
@@ -67,14 +66,14 @@ function permEl() {
 function hidePerm() { permEl().hidden = true; }
 function showPerm(st, hint) {
   const el = permEl();
-  el.innerHTML = '<div class="card"><h2>Izin diperlukan</h2>' +
+  el.innerHTML = '<div class="card"><p class="eyebrow">Izin aplikasi</p><h2>Izin diperlukan</h2><div class="rule3"></div>' +
     '<p class="mut">TAPAK membutuhkan izin berikut agar fitur patroli berfungsi. Data Anda tetap tersimpan di HP ini.</p>' +
-    PERMS.map(p => `<div class="pitem"><b>${p.ic}</b><span><b>${p.nama}</b><br><small>${p.guna}</small></span>` +
-      `<i class="pb ${st[p.id] === 'no' ? 'no' : 'ok'}">${st[p.id] === 'no' ? 'Belum' : '✔'}</i></div>`).join('') +
-    '<div class="pitem"><b>🖼</b><span><b>Foto &amp; galeri</b><br><small>Memakai pemilih foto bawaan Android, tanpa izin tambahan. ' +
+    PERMS.map(p => `<div class="pitem">${ICO(p.ic)}<span><b>${p.nama}</b><br><small>${p.guna}</small></span>` +
+      `<i class="pb ${st[p.id] === 'no' ? 'no' : 'ok'}">${st[p.id] === 'no' ? 'Belum' : 'Diizinkan'}</i></div>`).join('') +
+    `<div class="pitem">${ICO('image')}<span><b>Foto &amp; galeri</b><br><small>Memakai pemilih foto bawaan Android, tanpa izin tambahan. ` +
     'Hanya foto yang Anda pilih yang dibaca.</small></span><i class="pb ok">Otomatis</i></div>' +
     (hint ? `<p class="phint">${hint}</p>` : '') +
-    '<button class="big" id="pgo">Berikan izin</button>' +
+    '<button class="btn btn-p wide" id="pgo">Berikan izin</button>' +
     (PERM_STRICT ? '' : '<button class="pskip" id="pskip">Nanti saja</button>') + '</div>';
   el.hidden = false;
   document.getElementById('pgo').addEventListener('click', grantClick);
@@ -94,7 +93,7 @@ async function grantClick() {
   const miss = missingOf(await permStatus());
   if (miss.length) await permRequest(miss);
   const st = await permStatus();
-  if (!missingOf(st).length) { hidePerm(); onPermOk(st); toast('Semua izin sudah diberikan ✔'); }
+  if (!missingOf(st).length) { hidePerm(); onPermOk(st); toast('Semua izin sudah diberikan'); }
   else showPerm(st, HINT_SETTINGS);
 }
 
