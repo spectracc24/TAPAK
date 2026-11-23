@@ -32,4 +32,4 @@ if (gagal) { console.error(`\n${gagal} berkas gagal disalin. Build dihentikan.`)
 // Tulis versi aplikasi dari package.json agar layar "Tentang" selalu cocok dengan versi APK.
 const v = require('./package.json').version;
 fs.writeFileSync('www/lib/version.js', `window.APP_VER=${JSON.stringify(v)};\n`);
-console.log('ok version', v);
+console.log('ok version', v); 
