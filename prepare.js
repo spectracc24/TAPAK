@@ -9,7 +9,7 @@ const files = [
   'pdfjs-dist/build/pdf.min.js', 'pdfjs-dist/build/pdf.worker.min.js',
   'proj4/dist/proj4.js', 'jszip/dist/jszip.min.js',
   'piexifjs/piexif.js', '@mapbox/shp-write/shpwrite.js'
-];
+]; 
 // Font identitas Spectra CC (Manrope untuk judul, Inter untuk isi), disalin agar tampil tanpa internet
 const fonts = [
   '@fontsource/manrope/files/manrope-latin-500-normal.woff2', '@fontsource/manrope/files/manrope-latin-700-normal.woff2',
