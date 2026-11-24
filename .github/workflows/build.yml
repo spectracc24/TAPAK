@@ -103,8 +103,11 @@ jobs:
             export KEY_PASS="${KEY_PASS:-$KS_PASS}"
             echo "$KS_B64" | base64 -d > "$RUNNER_TEMP/release.jks"
             "$BT/zipalign" -p -f 4 app/build/outputs/apk/release/app-release-unsigned.apk "$RUNNER_TEMP/aligned.apk"
-            "$BT/apksigner" sign --ks "$RUNNER_TEMP/release.jks" --ks-pass env:KS_PASS \
-              --ks-key-alias "$KEY_ALIAS" --key-pass env:KEY_PASS \
+            "$BT/apksigner" sign --ks "$RUNNER_TEMP/release.jks" \
+              --ks-type PKCS12 \
+              --ks-pass env:KS_PASS \
+              --ks-key-alias "$KEY_ALIAS" \
+              --key-pass env:KEY_PASS \
               --out "../TAPAK-v${VN}.apk" "$RUNNER_TEMP/aligned.apk"
             rm -f "$RUNNER_TEMP/release.jks" "$RUNNER_TEMP/aligned.apk"
             "$BT/apksigner" verify --verbose "../TAPAK-v${VN}.apk"
