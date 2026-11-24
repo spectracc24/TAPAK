@@ -29,7 +29,7 @@ TAPAK dibuat sebagai alternatif ringan untuk aplikasi peta lapangan berbayar. Ap
 - **Navigasi dan orientasi peta** memakai posisi GPS, kompas, dan skala.
 - **Peta offline:** impor GeoPDF dari HP, tampil sesuai posisi sebenarnya, dengan pengaturan transparansi.
 - **Peta online gratis** (jalan, kontur, satelit) saat ada internet.
-- **Rekam jejak patroli (tracking):** jarak dan durasi tampil langsung, bisa **dijeda dan dilanjutkan**, hasilnya disimpan sebagai jalur. Interval pencatatan 2 detik (baku), 30 detik, semua fix, atau custom. Tetap merekam saat aplikasi diminimalkan, ditandai notifikasi di bilah status.
+- **Rekam jejak patroli (tracking):** jarak dan durasi tampil langsung, bisa **dijeda dan dilanjutkan**, hasilnya disimpan sebagai jalur. Interval pencatatan 2 detik (baku), 30 detik, semua fix, atau custom. Tetap merekam saat aplikasi diminimalkan, ditandai notifikasi di bilah status. 
 - **Elevasi:** dari GPS dengan koreksi geoid EGM96 (offline), tampil di layar, tersimpan pada titik dan jejak (naik/turun, profil elevasi), dan bisa dikalibrasi.
 - **Batas akurasi GPS:** baku 32 m (setara Avenza); peringatan atau blokir saat menandai titik bila akurasi lebih buruk; titik jejak yang melebihi batas dilewati.
 - **Kelola banyak data:** cari, saring, **sembunyikan/tampilkan**, pilih beberapa objek untuk disembunyikan, diberi simbol, diekspor, atau dihapus.
