@@ -49,7 +49,7 @@ const SHP_SVG = {
   circle: '<circle cx="12" cy="12" r="8"/>', square: '<rect x="4" y="4" width="16" height="16" rx="2"/>', triangle: '<path d="M12 3.5L21 20H3z"/>',
   diamond: '<path d="M12 2.5L21.5 12 12 21.5 2.5 12z"/>', star: '<path d="M12 2.5l2.9 6.2 6.6.8-4.9 4.6 1.3 6.7-5.9-3.3-5.9 3.3 1.3-6.7L2.5 9.5l6.6-.8z"/>', cross: '<path d="M9 3h6v6h6v6h-6v6H9v-6H3V9h6z"/>'
 };
-const shapeSvg = (sh, c, px) => `<svg viewBox="0 0 24 24" width="${px}" height="${px}" aria-hidden="true"><g fill="${c}" stroke="#fff" stroke-width="2.4" stroke-linejoin="round" style="paint-order:stroke">${SHP_SVG[sh] || SHP_SVG.circle}</g></svg>`;
+const shapeSvg = (sh, c, px) => `<svg viewBox="0 0 24 24" width="${px}" height="${px}" aria-hidden="true"><g fill="${c}" stroke="#fff" stroke-width="2.4" stroke-linejoin="round" paint-order="stroke">${SHP_SVG[sh] || SHP_SVG.circle}</g></svg>`;
 const hashStr = s => { let h = 0; for (let i = 0; i < s.length; i++)h = (h * 31 + s.charCodeAt(i)) >>> 0; return h };
 function symOf(f) {
   const s = f.sym || {}; let c = s.c;
@@ -139,11 +139,12 @@ let gpsWatch = null, gpsRetry = 0;
 function watchGPS(G, cb) {
   // Capacitor 8: 'timeout' berlaku untuk watchPosition dan 'interval' bawaannya = timeout -> atur eksplisit,
   // lalu pasang ulang watch bila berhenti karena galat agar GPS tidak mati diam-diam.
-  gpsWatch = G.watchPosition({ enableHighAccuracy: true, timeout: 120000, maximumAge: 0, interval: 2000, minimumUpdateInterval: 1000 }, (p, e) => {
+  // watchPosition bertipe callback: mengembalikan string id (bukan Promise), jadi dibungkus Promise.resolve
+  gpsWatch = Promise.resolve(G.watchPosition({ enableHighAccuracy: true, timeout: 120000, maximumAge: 0, interval: 2000, minimumUpdateInterval: 1000 }, (p, e) => {
     if (p) { gpsRetry = 0; cb(p); return }
     if (e && !fix) { gpsMsg = 'GPS belum mendapat sinyal. Pastikan Lokasi HP aktif & berada di area terbuka.'; hud() }
     if (e && gpsRetry < 30) { gpsRetry++; const old = gpsWatch; gpsWatch = null; Promise.resolve(old).then(id => id != null && G.clearWatch({ id })).catch(() => { }); setTimeout(() => { if (!gpsWatch) watchGPS(G, cb) }, 3000) }
-  });
+  }));
   gpsWatch.catch(() => { gpsWatch = null; gpsOn = false })
 }
 async function startGPS() {
@@ -183,13 +184,22 @@ let pm; function setPick(ll) { pick = ll; if (pm) map.removeLayer(pm); pm = L.ci
 // Titik juga disimpan ke IndexedDB berkala agar jejak selamat bila aplikasi tertutup.
 const BG = () => native && plug('BackgroundGeolocation'), LN = () => native && plug('LocalNotifications');
 const trkIvMs = () => S.trkInt == 'all' ? 0 : S.trkInt == '30' ? 30000 : S.trkInt == 'custom' ? Math.max(1, +S.trkCustom || 2) * 1000 : 2000;
+// addWatcher bertipe callback: Capacitor 8 mengembalikan STRING id secara langsung, bukan Promise. Kode lama memanggil
+// .catch() pada string itu -> TypeError SETELAH watcher terpasang di native, bgP tak pernah terisi, dan saat rekaman
+// dihentikan bgStop() mengira tidak ada watcher sehingga notifikasi "sedang merekam" tidak pernah hilang.
+// Promise.resolve() menangani string maupun Promise.
+function bgFail(err) { bgP = null; console.error('bg watcher', err); toast('Rekam di latar belakang gagal aktif. Biarkan TAPAK tetap terbuka.') }
 function bgStart() {
   const B = BG(); if (!B) { if (native) toast('Rekam latar belakang tidak tersedia di build ini'); return }
   if (bgP || paused) return;
-  bgP = B.addWatcher({ backgroundTitle: 'TAPAK sedang merekam jejak', backgroundMessage: 'Ketuk untuk membuka TAPAK · Spectra CC', requestPermissions: false, stale: false, distanceFilter: 0 }, (l, e) => {
-    if (e) { if (e.code === 'NOT_AUTHORIZED') { toast('Izin lokasi diperlukan agar rekaman tetap jalan di latar belakang'); bgStop() } return }
-    if (l) applyFix(l.latitude, l.longitude, l.accuracy, l.bearing, l.speed, l.altitude, l.altitudeAccuracy, l.time)
-  }).catch(err => { bgP = null; console.error('bg watcher', err); toast('Rekam di latar belakang gagal aktif. Biarkan TAPAK tetap terbuka.') })
+  let r;
+  try {
+    r = B.addWatcher({ backgroundTitle: 'TAPAK sedang merekam jejak', backgroundMessage: 'Ketuk untuk membuka TAPAK · Spectra CC', requestPermissions: false, stale: false, distanceFilter: 0 }, (l, e) => {
+      if (e) { if (e.code === 'NOT_AUTHORIZED') { toast('Izin lokasi diperlukan agar rekaman tetap jalan di latar belakang'); bgStop() } return }
+      if (l) applyFix(l.latitude, l.longitude, l.accuracy, l.bearing, l.speed, l.altitude, l.altitudeAccuracy, l.time)
+    })
+  } catch (err) { bgFail(err); return }
+  bgP = Promise.resolve(r); bgP.catch(bgFail)
 }
 async function bgStop() { const B = BG(), p = bgP; bgP = null; if (!B || !p) return; try { const id = await p; if (id != null) await B.removeWatcher({ id }) } catch (e) { console.error('bg stop', e) } }
 // notifikasi "dijeda" (selama jeda tidak ada layanan latar depan, jadi penanda ini yang mengingatkan pengguna)

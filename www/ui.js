@@ -8,8 +8,9 @@ const re = fn => { const s = $('#sheet'), sc = s.scrollTop; fn(); s.scrollTop = 
 
 // ---------- logo ----------
 // Logo pengembang (Spectra CC) hanya dipakai di bagian "Dikembangkan oleh". Logo aplikasi = pin + telapak kaki (lib/mark.js).
-const ARCS = '<path d="M-90.5 -165.9A189 189 0 1 0 163.8 -94.2" style="stroke:var(--lg-o)"/><path d="M67.5 -112.3A131 131 0 1 0 112.8 66.7" style="stroke:var(--lg-m)"/><path d="M71 0A71 71 0 1 0 0 71" style="stroke:var(--lg-i)"/>';
-const MARK = `<svg viewBox="-210 -210 420 420" class="mk" aria-hidden="true" fill="none" stroke-width="32" stroke-linecap="round">${ARCS}<circle r="19" stroke="none" style="fill:var(--lg-d)"/></svg>`;
+// Warna lewat class (style.css: .mk .a-o dst.), bukan atribut style="", agar logo tetap tampil walau CSP diperketat
+const ARCS = '<path class="a-o" d="M-90.5 -165.9A189 189 0 1 0 163.8 -94.2"/><path class="a-m" d="M67.5 -112.3A131 131 0 1 0 112.8 66.7"/><path class="a-i" d="M71 0A71 71 0 1 0 0 71"/>';
+const MARK = `<svg viewBox="-210 -210 420 420" class="mk" aria-hidden="true" fill="none" stroke-width="32" stroke-linecap="round">${ARCS}<circle class="a-d" r="19" stroke="none"/></svg>`;
 const LOGO = `${MARK}<span class="wm"><b>Spectra CC</b><i>Citra Cendekia</i></span>`;
 const APPMARK = (c = '') => `<svg viewBox="-125 -125 250 250" class="${c}" aria-hidden="true">${window.TAPAK_MARK || ''}</svg>`;
 $$('[data-logo]').forEach(e => e.innerHTML = LOGO);
@@ -165,7 +166,7 @@ window.pNudge = (id, keep) => {
 
 // ---------- panel: daftar data (cari, saring, pilih, sembunyikan, simbol, ekspor) ----------
 const LS = { sel: false, ids: new Set(), q: '', t: 'all' };
-const symIcon = f => { const sy = symOf(f); return f.type == 'Point' ? `<span class=ico>${shapeSvg(sy.sh, sy.c, 26)}</span>` : `<span class=ico style="color:${sy.c}">${I(FT[f.type])}</span>` };
+const symIcon = f => { const sy = symOf(f); return f.type == 'Point' ? `<span class=ico>${shapeSvg(sy.sh, sy.c, 26)}</span>` : `<span class=ico>${I(FT[f.type]).replace('<svg ', `<svg color="${sy.c}" `)}</span>` };
 const lsFiltered = () => { const q = LS.q.trim().toLowerCase(); return F.filter(f => (LS.t == 'all' || f.type == LS.t) && (!q || [f.props.name, f.props.desc, ...Object.values(f.props.custom || {})].join(' ').toLowerCase().includes(q))) };
 function lsRow(f) {
   const vis = isVis(f), on = LS.ids.has(f.id), c = f.coords[0], d = fix && fix.t ? ` · ${fd(map.distance([fix.lat, fix.lon], [c[1], c[0]]))} dari Anda` : '';
@@ -211,7 +212,7 @@ window.lsDel = async () => {
 
 // ---------- panel: ubah simbol (satu atau banyak objek) ----------
 let SY = {}, SYIDS = [];
-const swatches = (sel, fn) => `<div class=swr>${COLORS.map(([c, n]) => `<button class="swc ${sel == c ? 'on' : ''}" style="background:${c}" onclick="${fn}('${c}')" aria-label="${n}" title="${n}"></button>`).join('')}</div>`;
+const swatches = (sel, fn) => `<div class=swr>${COLORS.map(([c, n]) => `<button class="swc ${sel == c ? 'on' : ''}" onclick="${fn}('${c}')" aria-label="${n}" title="${n}"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="12" fill="${c}"/></svg></button>`).join('')}</div>`;
 const shapeBtns = (sel, fn) => `<div class=swr>${Object.entries(SHAPES).map(([k, n]) => `<button class="shp ${sel == k ? 'on' : ''}" onclick="${fn}('${k}')" aria-label="${n}" title="${n}">${shapeSvg(k, 'var(--head)', 26)}</button>`).join('')}</div>`;
 const lineBtns = (sel, fn) => `<div class=chips>${Object.entries(LNSTY).map(([k, [n]]) => `<button class="${sel == k ? 'on' : ''}" onclick="${fn}('${k}')">${n}</button>`).join('')}</div>`;
 window.pSym = ids => {
@@ -347,7 +348,15 @@ window.pAbout = () => sheet(`<div class=about>${APPMARK('appmark')}<h3>TAPAK</h3
  <div class=byline><small>Dikembangkan oleh</small><span class=logo>${LOGO}</span>
  <p class=sl>Science into Sustainable Solutions.</p><p class=mut style="margin:0">Pontianak, Kalimantan Barat, Indonesia</p></div>
  <p class=foot>Versi ${esc(window.APP_VER || '')} · © 2026 Spectra Citra Cendekia</p></div>`);
-setTimeout(() => $('#splash').classList.add('off'), 1700);
-kvg('seen').then(v => { if (!v) setTimeout(() => $('#welcome').hidden = false, 1800) });
+// Splash tidak lagi menutup sendiri: pengguna menekan "Jelajahi Peta". Sambutan pertama kali dan permintaan izin
+// baru muncul setelah itu, supaya tidak tertutup splash.
+window.enterApp = () => {
+  const sp = $('#splash'); if (sp.classList.contains('off')) return;
+  sp.classList.add('off');
+  kvg('seen').then(v => {
+    if (!v) setTimeout(() => { $('#welcome').hidden = false }, 350);
+    else setTimeout(() => { if (typeof ensurePerms === 'function') ensurePerms() }, 450);
+  });
+};
 window.closeWelcome = () => { $('#welcome').hidden = true; kv.set('seen', 1).catch(() => { }) };
 trackUI(); hud();

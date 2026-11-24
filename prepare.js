@@ -58,3 +58,24 @@ console.log('ok version', v);
   fs.writeFileSync('www/lib/mark.js', 'window.TAPAK_MARK=' + JSON.stringify(M.svgInner('var(--mk-pin)', 'var(--mk-ft)')) + ';\n');
   console.log('ok mark');
 }
+
+// Validasi CSP di index.html. Titik koma yang hilang (mis. "... 'wasm-unsafe-eval' style-src ...") membuat
+// style-src ikut terbaca sebagai nilai script-src, lalu kebijakan jatuh ke default-src 'self' dan SEMUA style="..." inline
+// diblokir (logo, swatch warna, dll. tampil rusak). Build dihentikan bila itu terjadi.
+{
+  const html = fs.readFileSync('www/index.html', 'utf8');
+  const m = html.match(/Content-Security-Policy[\s\S]*?content="([^"]+)"/i);
+  if (!m) { console.error('CSP tidak ditemukan di www/index.html'); process.exit(1); }
+  const directives = m[1].split(';').map(d => d.trim()).filter(Boolean);
+  const names = new Set(directives.map(d => d.split(/\s+/)[0]));
+  let bad = 0;
+  for (const d of directives) {
+    for (const tok of d.split(/\s+/).slice(1)) {
+      if (/-src$|^default-src$|^base-uri$|^form-action$|^object-src$/.test(tok) && !tok.startsWith("'")) { console.error('CSP salah: "' + tok + '" berada di dalam direktif "' + d.split(/\s+/)[0] + '" (titik koma hilang?)'); bad++; }
+    }
+  }
+  for (const need of ['default-src', 'script-src', 'style-src', 'img-src']) if (!names.has(need)) { console.error('CSP tanpa direktif ' + need); bad++; }
+  if (bad) process.exit(1);
+  console.log('ok CSP');
+}
+

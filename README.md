@@ -156,3 +156,11 @@ Peta dasar online: © kontributor OpenStreetMap, OpenTopoMap, dan Esri. Library 
 - Batas akurasi horizontal (baku 32 m) dengan peringatan/blokir; Pengaturan lengkap + reset default.
 - Logo aplikasi: pin + telapak kaki (tanpa unsur logo pengembang); logo Spectra CC hanya di “Dikembangkan oleh”.
 - Perbaikan: tata letak “Tentang”; KMZ memakai tag `<name>` yang valid (sebelumnya `<n>`, sehingga nama objek tidak tampil di Google Earth); Shapefile jalur kini satu record per jalur (library sebelumnya menggabung semua jalur menjadi satu record).
+
+## 9. Catatan Versi 1.4.1 (perbaikan)
+
+- **CSP:** titik koma yang hilang di `index.html` (`'wasm-unsafe-eval' style-src ...`) membuat `style-src` terbaca sebagai nilai `script-src`, sehingga semua atribut `style=""` inline diblokir (logo Spectra hilang, swatch warna polos). Diperbaiki, dan `prepare.js` kini menghentikan build bila CSP salah format.
+- **Logo Spectra & swatch:** warnanya kini lewat class CSS / atribut SVG, tidak lagi bergantung pada `style=""` inline.
+- **Notifikasi “sedang merekam” tidak hilang:** di Capacitor 8 `addWatcher` (bertipe callback) mengembalikan string id, bukan Promise. Kode lama memanggil `.catch()` pada string itu sehingga id watcher tidak pernah tersimpan dan `removeWatcher` tidak pernah dipanggil. Kini dibungkus `Promise.resolve()` (juga pada `watchPosition`).
+- **Splash:** tidak lagi menutup otomatis; ada tombol **Jelajahi Peta**. Sambutan pertama kali dan permintaan izin muncul setelah tombol ditekan.
+

@@ -6,7 +6,7 @@
     <meta name=viewport
         content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
     <meta http-equiv=Content-Security-Policy
-        content="default-src 'self'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://*.tile.openstreetmap.org https://tile.openstreetmap.org https://*.tile.opentopomap.org https://server.arcgisonline.com; worker-src 'self' blob:; connect-src 'self' data: blob:; object-src 'none'; base-uri 'none'; form-action 'none'">
+        content="default-src 'self'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://*.tile.openstreetmap.org https://tile.openstreetmap.org https://*.tile.opentopomap.org https://server.arcgisonline.com; worker-src 'self' blob:; connect-src 'self' data: blob:; object-src 'none'; base-uri 'none'; form-action 'none'">
     <meta name=theme-color content="#17324d">
     <title>TAPAK · Spectra CC</title>
     <link rel=stylesheet href=lib/leaflet.css>
@@ -344,6 +344,9 @@
             <h1>TAPAK</h1>
             <p class=sub>Teknologi Akuisisi dan Pencatatan Hutan Kita</p>
             <p class=tag>Every Track Tells a Story.</p>
+            <button id=enter class="btn btn-enter" onclick=enterApp()>Jelajahi Peta<svg class=ic aria-hidden=true>
+                    <use href=#i-arrow></use>
+                </svg></button>
         </div>
         <div class=sp-by><small>Dikembangkan oleh</small><span class="logo rev" data-logo></span><em>Science into
                 Sustainable Solutions.</em></div>

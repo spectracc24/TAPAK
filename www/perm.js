@@ -151,5 +151,6 @@ window.takePhoto = async function (inputId) {          // 'cam' | 'gal'
   window.closeWelcome = function () { cw(); setTimeout(ensurePerms, 300); };
 }
 
-// Saat aplikasi dibuka: setelah splash (dan sambutan pertama kali bila ada)
-setTimeout(() => { const w = document.getElementById('welcome'); if (!w || w.hidden) ensurePerms(); }, 2100);
+// Saat aplikasi dibuka: izin diminta setelah pengguna menekan "Jelajahi Peta" di splash (enterApp di ui.js),
+// atau setelah sambutan pertama kali ditutup (closeWelcome di atas). Tidak lagi memakai timer otomatis,
+// karena splash kini tidak menutup sendiri dan dialog izin akan tertutup olehnya.
