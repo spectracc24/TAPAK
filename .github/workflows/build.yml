@@ -73,7 +73,7 @@ jobs:
           open(p,'w').write(s)
           assert 'android:allowBackup="false"' in s, 'allowBackup gagal dimatikan'
           assert 'usesCleartextTraffic="false"' in s, 'cleartext gagal dimatikan'
-          PY
+          PY 
           grep -E "uses-(permission|feature)|allowBackup|usesCleartext" android/app/src/main/AndroidManifest.xml
 
       - name: Atur versi (versionCode naik tiap build agar APK bisa menimpa versi lama)
