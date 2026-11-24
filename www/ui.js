@@ -291,7 +291,7 @@ window.pHelp=()=>sheet(`<h3>Cara pakai</h3>
  <h4>Ganti format koordinat</h4><p>Ketuk kotak koordinat di kiri atas, atau lewat Pengaturan.</p>`);
 window.pAbout=()=>sheet(`<div class=about>${APPMARK('appmark')}<h3>TAPAK</h3><p class=tg>Teknologi Akuisisi dan Pencatatan Hutan Kita</p><p class=lead>Every Track Tells a Story.<br>Peta, jejak, dan catatan lapangan untuk perlindungan hutan berbasis masyarakat. Bekerja tanpa internet.</p>
  <div class=byline><small>Dikembangkan oleh</small><span class=logo>${LOGO}</span>
- <p class=sl>Science into Sustainable Solutions.</p><p class=mut style="margin:0">Konsultan geospasial untuk keberlanjutan lingkungan<br>Terdaftar AHU-015113.AH.01.30 Tahun 2025<br>Kubu Raya, Kalimantan Barat, Indonesia</p></div>
+ <p class=sl>Science into Sustainable Solutions.</p><p class=mut style="margin:0">Pontianak, Kalimantan Barat, Indonesia</p></div>
  <p class=foot>Versi ${esc(window.APP_VER||'')} · © 2026 Spectra Citra Cendekia</p></div>`);
 setTimeout(()=>$('#splash').classList.add('off'),1700);
 kvg('seen').then(v=>{if(!v)setTimeout(()=>$('#welcome').hidden=false,1800)});
