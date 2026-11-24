@@ -77,7 +77,7 @@ Plugin lokal `FileSaver` (`native/FileSaverPlugin.java`, dipasang otomatis oleh 
 **Penyimpanan:** IndexedDB di dalam aplikasi (objek, foto, peta PDF, pengaturan).
 
 **Izin Android:** lokasi (presisi dan perkiraan), kamera, internet, layanan latar depan (`FOREGROUND_SERVICE`, `FOREGROUND_SERVICE_LOCATION`), dan notifikasi (`POST_NOTIFICATIONS`); ditulis otomatis ke AndroidManifest oleh workflow build. Aplikasi **memeriksa izin setiap dibuka dan setiap kembali ke layar depan**, lalu menampilkan dialog bila ada yang belum diberikan (lihat bagian 6). Pilih foto dari galeri memakai pemilih foto bawaan Android yang tidak memerlukan izin tambahan.
-
+ 
 ## 4. Struktur Repo
 
 ```
