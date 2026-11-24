@@ -19,7 +19,11 @@ const PERMS = [
   { id: 'location', ic: 'pin', nama: 'Lokasi presisi (GPS)', plugin: 'Geolocation', key: 'location',
     guna: 'Menampilkan posisi Anda, merekam jejak patroli, dan memberi koordinat pada temuan.' },
   { id: 'camera', ic: 'camera', nama: 'Kamera', plugin: 'Camera', key: 'camera',
-    guna: 'Mengambil foto temuan langsung di lapangan.' }
+    guna: 'Mengambil foto temuan langsung di lapangan.' },
+  // Android 13+: tanpa izin ini penanda "sedang merekam" tidak tampil di bilah status saat TAPAK diminimalkan.
+  // soft = disarankan, tidak membuat dialog izin muncul sendiri setiap aplikasi dibuka.
+  { id: 'notif', ic: 'info', nama: 'Notifikasi', plugin: 'LocalNotifications', key: 'display', soft: true,
+    guna: 'Menampilkan penanda “sedang merekam” atau “dijeda” di bilah status saat TAPAK diminimalkan.' }
 ];
 
 const HINT_SETTINGS = 'Izin masih ditolak. Android berhenti menampilkan permintaan setelah beberapa kali ditolak. ' +
@@ -42,7 +46,8 @@ async function permStatus() {
   }
   return out;
 }
-const missingOf = (st, ids) => PERMS.filter(p => (!ids || ids.includes(p.id)) && st[p.id] === 'no').map(p => p.id);
+// tanpa ids: hanya izin wajib (soft tidak ikut), supaya dialog tidak muncul terus bila notifikasi sengaja ditolak
+const missingOf = (st, ids) => PERMS.filter(p => (ids ? ids.includes(p.id) : !p.soft) && st[p.id] === 'no').map(p => p.id);
 
 async function permRequest(ids) {
   const by = {};
@@ -69,7 +74,7 @@ function showPerm(st, hint) {
   el.innerHTML = '<div class="card"><p class="eyebrow">Izin aplikasi</p><h2>Izin diperlukan</h2><div class="rule3"></div>' +
     '<p class="mut">TAPAK membutuhkan izin berikut agar fitur patroli berfungsi. Data Anda tetap tersimpan di HP ini.</p>' +
     PERMS.map(p => `<div class="pitem">${ICO(p.ic)}<span><b>${p.nama}</b><br><small>${p.guna}</small></span>` +
-      `<i class="pb ${st[p.id] === 'no' ? 'no' : 'ok'}">${st[p.id] === 'no' ? 'Belum' : 'Diizinkan'}</i></div>`).join('') +
+      `<i class="pb ${st[p.id] === 'no' ? 'no' : 'ok'}">${st[p.id] === 'no' ? (p.soft ? 'Disarankan' : 'Belum') : 'Diizinkan'}</i></div>`).join('') +
     `<div class="pitem">${ICO('image')}<span><b>Foto &amp; galeri</b><br><small>Memakai pemilih foto bawaan Android, tanpa izin tambahan. ` +
     'Hanya foto yang Anda pilih yang dibaca.</small></span><i class="pb ok">Otomatis</i></div>' +
     (hint ? `<p class="phint">${hint}</p>` : '') +
@@ -90,10 +95,10 @@ function onPermOk(st) {
 
 async function grantClick() {
   if (permBusy) return;
-  const miss = missingOf(await permStatus());
+  const miss = missingOf(await permStatus(), PERMS.map(p => p.id));   // dialog meminta semua, termasuk yang disarankan
   if (miss.length) await permRequest(miss);
   const st = await permStatus();
-  if (!missingOf(st).length) { hidePerm(); onPermOk(st); toast('Semua izin sudah diberikan'); }
+  if (!missingOf(st).length) { hidePerm(); onPermOk(st); if (!missingOf(st, PERMS.map(p => p.id)).length) toast('Semua izin sudah diberikan'); }
   else showPerm(st, HINT_SETTINGS);
 }
 

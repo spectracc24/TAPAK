@@ -32,4 +32,20 @@ if (gagal) { console.error(`\n${gagal} berkas gagal disalin. Build dihentikan.`)
 // Tulis versi aplikasi dari package.json agar layar "Tentang" selalu cocok dengan versi APK.
 const v = require('./package.json').version;
 fs.writeFileSync('www/lib/version.js', `window.APP_VER=${JSON.stringify(v)};\n`);
-console.log('ok version', v); 
+console.log('ok version', v);
+
+// Model geoid EGM96 (offline) untuk mengubah tinggi elipsoid GPS menjadi elevasi di atas muka laut (MSL).
+// Paket egm96-universal berformat CommonJS dan memakai rfc4648 hanya untuk decode base64; diganti atob() bawaan.
+{
+  let eg = fs.readFileSync(n + 'egm96-universal/dist/egm96-universal.cjs.js', 'utf8');
+  eg = eg.replace("require('rfc4648')", "{ base64: { parse: function (s) { return Uint8Array.from(atob(s), function (c) { return c.charCodeAt(0); }); } } }");
+  if (/require\(/.test(eg)) { console.error('egm96: masih ada require() setelah penggantian. Build dihentikan.'); process.exit(1); }
+  fs.writeFileSync('www/lib/egm96.js', '(function(){var exports={};\n' + eg + '\nwindow.EGM96=exports;})();\n');
+  console.log('ok egm96');
+}
+// Geometri logo TAPAK untuk UI (sumber tunggal: tools/mark.js, sama dengan ikon launcher)
+{
+  const M = require('./tools/mark.js');
+  fs.writeFileSync('www/lib/mark.js', 'window.TAPAK_MARK=' + JSON.stringify(M.svgInner('var(--mk-pin)', 'var(--mk-ft)')) + ';\n');
+  console.log('ok mark');
+}

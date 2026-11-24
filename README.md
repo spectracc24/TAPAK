@@ -29,14 +29,19 @@ TAPAK dibuat sebagai alternatif ringan untuk aplikasi peta lapangan berbayar. Ap
 - **Navigasi dan orientasi peta** memakai posisi GPS, kompas, dan skala.
 - **Peta offline:** impor GeoPDF dari HP, tampil sesuai posisi sebenarnya, dengan pengaturan transparansi.
 - **Peta online gratis** (jalan, kontur, satelit) saat ada internet.
-- **Rekam jejak patroli (tracking):** jarak dan durasi tampil langsung, hasilnya disimpan sebagai jalur. **Tetap merekam saat layar dikunci atau aplikasi diminimalkan** (layanan latar depan dengan notifikasi permanen), dan jejak yang belum disimpan dipulihkan otomatis bila aplikasi tertutup.
+- **Rekam jejak patroli (tracking):** jarak dan durasi tampil langsung, bisa **dijeda dan dilanjutkan**, hasilnya disimpan sebagai jalur. Interval pencatatan 2 detik (baku), 30 detik, semua fix, atau custom. Tetap merekam saat aplikasi diminimalkan, ditandai notifikasi di bilah status.
+- **Elevasi:** dari GPS dengan koreksi geoid EGM96 (offline), tampil di layar, tersimpan pada titik dan jejak (naik/turun, profil elevasi), dan bisa dikalibrasi.
+- **Batas akurasi GPS:** baku 32 m (setara Avenza); peringatan atau blokir saat menandai titik bila akurasi lebih buruk; titik jejak yang melebihi batas dilewati.
+- **Kelola banyak data:** cari, saring, **sembunyikan/tampilkan**, pilih beberapa objek untuk disembunyikan, diberi simbol, diekspor, atau dihapus.
+- **Simbol:** 6 bentuk titik, 8 warna, gaya garis (tegas/putus/titik), ukuran simbol, label nama (tampil/otomatis/sembunyi), dan warna otomatis menurut atribut “Jenis”. **Tetap merekam saat layar dikunci atau aplikasi diminimalkan** (layanan latar depan dengan notifikasi permanen), dan jejak yang belum disimpan dipulihkan otomatis bila aplikasi tertutup.
 - **Tandai titik, gambar jalur, dan gambar area** langsung di peta atau dari lokasi GPS.
 - **Ukur jarak dan luas** (metrik, imperial, atau nautika).
 - **Atribut objek:** nama, keterangan, dan data tambahan bebas (jenis, jumlah, kondisi, dan lain-lain).
 - **Foto lampiran dengan geotag:** koordinat dituliskan ke EXIF foto. Foto kamera dan galeri sama-sama didukung.
 - **Navigasi ke titik tujuan:** jarak dan arah dari posisi saat ini.
 - **Sistem koordinat:** derajat desimal (WGS84), derajat-menit-detik, dan UTM. Ketuk kotak koordinat di kiri atas untuk berganti.
-- **Ekspor data:** GeoJSON, KMZ (foto ikut), dan SHP dalam zip (foto ikut), dibagikan lewat menu Share Android.
+- **Ekspor data:** GeoJSON, KMZ, dan SHP (zip). Pilih semua, terpilih, atau yang tampil; **Simpan ke perangkat** (dialog “Simpan sebagai” Android) atau **Bagikan**. Elevasi, akurasi GPS, dan simbol ikut sebagai atribut.
+- **Pengaturan** lengkap dengan tombol **Kembalikan ke default**.
 
 ## 3. Teknologi dan Package
 
@@ -44,17 +49,20 @@ TAPAK dibuat sebagai alternatif ringan untuk aplikasi peta lapangan berbayar. Ap
 - Aplikasi web (HTML, CSS, JavaScript tanpa framework) yang dibungkus menjadi APK dengan **Capacitor 8**.
 - Build APK otomatis di **GitHub Actions** (Ubuntu, Node 22, Java 21 Temurin, Gradle 8.14, Android SDK 36).
 
-**Package Capacitor (versi TAPAK 1.3, dikunci di `package-lock.json`)**
-| Package | Versi | Fungsi |
-|---|---|---|
-| `@capacitor/core`, `cli`, `android` | 8.6.2 | Pembungkus aplikasi menjadi APK |
-| `@capacitor/geolocation` | 8.2.5 | GPS dan izin lokasi |
-| `@capacitor/camera` | 8.2.6 | Meminta izin kamera (foto tetap diambil lewat input bawaan) |
-| `@capacitor/filesystem` | 8.1.5 | Menyimpan berkas ekspor sementara |
-| `@capacitor/share` | 8.0.3 | Membagikan berkas ekspor |
-| `@capacitor-community/background-geolocation` | 1.3.1 | Rekam jejak di latar belakang (foreground service) |
-| `@capacitor/assets` (dev) | 4.0.0 |
-| `@fontsource/manrope`, `@fontsource/inter` | 5.3.0 | Font identitas Spectra CC, disalin ke `www/lib/fonts` (tampil offline) | Membuat ikon dan splash Android |
+**Package Capacitor (versi dikunci di `package-lock.json`)**
+
+| Package                             | Versi  | Fungsi                                                                    |
+| ----------------------------------- | ------ | ------------------------------------------------------------------------- |
+| `@capacitor/core`, `cli`, `android` | 8.6.2  | Pembungkus aplikasi menjadi APK                                           |
+| `@capacitor/geolocation`            | 8.2.5  | GPS di layar depan dan izin lokasi                                        |
+| `@capacitor-community/background-geolocation` | 1.3.1 | Merekam saat diminimalkan (layanan latar depan + notifikasi)  |
+| `@capacitor/local-notifications`    | 8.3.1  | Izin notifikasi (Android 13+) dan notifikasi “rekaman dijeda”             |
+| `@capacitor/camera`                 | 8.2.6  | Meminta izin kamera (foto tetap diambil lewat input bawaan)               |
+| `@capacitor/filesystem`             | 8.1.5  | Menulis berkas ekspor sementara                                           |
+| `@capacitor/share`                  | 8.0.3  | Membagikan berkas ekspor                                                  |
+| `@capacitor/assets` (dev)           | 4.0.0  | Membuat ikon dan splash Android                                          |
+
+Plugin lokal `FileSaver` (`native/FileSaverPlugin.java`, dipasang otomatis oleh workflow) membuka dialog “Simpan sebagai” Android (Storage Access Framework) tanpa izin penyimpanan.
 
 **Library peta dan data (versi TAPAK 1.0)** (disalin ke `www/lib` saat build agar jalan offline)
 | Library | Versi | Fungsi |
@@ -79,7 +87,9 @@ www/georef.js                       Georeferensi GeoPDF (parser, proyeksi, warp)
 test/georef.test.js                 Uji otomatis georeferensi (npm test; dijalankan juga di GitHub Actions)
 tools/make-assets.js                Membuat ikon dan splash dari logo vektor Spectra CC (npm run assets)
 assets/android/ic_tracking.xml      Ikon notifikasi rekam jejak (monokrom)
-www/perm.js                         Manajer izin (lokasi, kamera)
+www/perm.js                         Manajer izin (lokasi, kamera, notifikasi)
+native/                             FileSaverPlugin.java + MainActivity.java (dipasang saat build)
+tools/mark.js, make-assets.js       Logo pin + telapak kaki, pembuat ikon/splash/ikon notifikasi
 assets/                             Ikon dan splash sumber
 prepare.js                          Menyalin library ke www/lib saat build
 capacitor.config.json               Nama dan ID aplikasi
@@ -102,11 +112,13 @@ package.json, package-lock.json      Dependensi (versi dikunci)
 - `useLegacyBridge: true` di `capacitor.config.json` **jangan dihapus**: tanpa itu, pembaruan lokasi latar belakang berhenti sekitar 5 menit setelah aplikasi diminimalkan.
 - Jangan geser-tutup TAPAK dari daftar aplikasi terbaru saat merekam. Pada HP Xiaomi, Oppo, Vivo, Samsung, dan merek lain dengan penghemat baterai agresif, atur Baterai TAPAK ke **Tanpa batasan**.
 - Rekaman yang terputus (aplikasi ditutup paksa, HP restart) dilanjutkan otomatis saat TAPAK dibuka lagi; bagian yang hilang selama terputus tampak sebagai garis lurus.
-- Fix GPS pertama bisa lama, terutama di dalam bangunan atau di bawah kanopi lebat. Titik dengan akurasi buruk (lebih dari 50 m) tidak dicatat dalam track.
+- Fix GPS pertama bisa lama, terutama di dalam bangunan atau di bawah kanopi lebat. Titik yang akurasinya melebihi batas (baku 32 m, bisa diubah di Pengaturan) tidak dicatat dalam track.
 - Kompas bergantung pada sensor HP dan bisa perlu dikalibrasi. Peta tidak berputar mengikuti arah HP.
 
 **Data dan ekspor**
 - Tidak ada fitur impor GeoJSON, KML, atau SHP, dan tidak ada pengeditan titik (vertex) setelah objek disimpan.
+- Elevasi berasal dari GPS HP: ketelitian vertikal biasanya 2–3× lebih buruk dari horizontal. Untuk elevasi titik di luar jangkauan sinyal, atau titik yang ditandai manual di peta, elevasi tidak tersedia (belum ada model elevasi/DEM offline).
+- Ikon KMZ memakai titik bulat berwarna; bentuk simbol lengkap tersimpan sebagai atribut `simbol`.
 - Foto diperkecil maksimal 1600 px dan disimpan di dalam aplikasi, jadi banyak foto menambah ukuran data.
 - Shapefile membatasi nama atribut maksimal 10 karakter, dan koordinatnya WGS84.
 - Satu objek hanya bertipe titik, jalur, atau area. Tidak ada lapisan (layer) terpisah.
@@ -133,3 +145,14 @@ Pelaporan kerentanan: lihat `SECURITY.md`.
 ## 7. Lisensi dan Atribusi
 
 Peta dasar online: © kontributor OpenStreetMap, OpenTopoMap, dan Esri. Library pihak ketiga memakai lisensi masing-masing (Leaflet BSD-2, pdf.js Apache-2.0, proj4 MIT, JSZip MIT/GPLv3, piexifjs MIT, shp-write BSD). Logo dan identitas visual Spectra CC mengikuti *Brand Identity & Strategic Guideline* v1.0 (Spectra Citra Cendekia, terdaftar AHU-015113.AH.01.30 Tahun 2025). Tentukan lisensi TAPAK sendiri sesuai kebijakan organisasi Anda.
+
+## 8. Catatan Versi 1.4.0
+
+- Peta PDF yang disembunyikan kini jelas ditandai (badge, kartu putus-putus, catatan, tombol berubah, titik pada tombol lapisan); status tersimpan.
+- Simpan ke perangkat, ekspor sebagian data, sembunyikan/tampilkan data, pilih banyak objek, simbol (bentuk/warna/gaya).
+- Elevasi (koreksi geoid EGM96, kalibrasi offset), profil elevasi jalur, selisih elevasi ke tujuan.
+- Jeda/lanjut rekaman; jarak selama jeda tidak dihitung (jejak menjadi multi-segmen). Interval 2 dtk / 30 dtk / semua fix / custom.
+- Notifikasi “sedang merekam” kini tampil: meminta izin `POST_NOTIFICATIONS` (Android 13+) dan memakai ikon monokrom TAPAK (sebelumnya ikon launcher berwarna).
+- Batas akurasi horizontal (baku 32 m) dengan peringatan/blokir; Pengaturan lengkap + reset default.
+- Logo aplikasi: pin + telapak kaki (tanpa unsur logo pengembang); logo Spectra CC hanya di “Dikembangkan oleh”.
+- Perbaikan: tata letak “Tentang”; KMZ memakai tag `<name>` yang valid (sebelumnya `<n>`, sehingga nama objek tidak tampil di Google Earth); Shapefile jalur kini satu record per jalur (library sebelumnya menggabung semua jalur menjadi satu record).

@@ -26,13 +26,37 @@ jobs:
         continue-on-error: true
         run: npx capacitor-assets generate --android --iconBackgroundColor '#14532d' --iconBackgroundColorDark '#14532d' --splashBackgroundColor '#14532d' --splashBackgroundColorDark '#14532d'
 
+      # Ikon notifikasi (pin + telapak), teks/warna notifikasi rekaman, dan plugin "Simpan sebagai" (SAF).
+      # Tanpa ini notifikasi rekaman memakai ikon launcher berwarna (tampil sebagai kotak putih) dan
+      # tombol "Simpan ke perangkat" memakai cadangan folder Dokumen/TAPAK.
+      - name: Pasang ikon notifikasi & plugin simpan berkas
+        run: |
+          set -euo pipefail
+          RES=android/app/src/main/res
+          mkdir -p "$RES/drawable"
+          cp assets/android/ic_stat_tapak.xml "$RES/drawable/ic_stat_tapak.xml"
+          python3 - <<'PY'
+          p='android/app/src/main/res/values/strings.xml'
+          s=open(p).read()
+          add=('    <string name="capacitor_background_geolocation_notification_icon">drawable/ic_stat_tapak</string>\n'
+               '    <string name="capacitor_background_geolocation_notification_color">#168C91</string>\n'
+               '    <string name="capacitor_background_geolocation_notification_channel_name">Rekaman jejak TAPAK</string>\n')
+          assert '</resources>' in s
+          s=s.replace('</resources>',add+'</resources>')
+          open(p,'w').write(s)
+          PY
+          JAVA=android/app/src/main/java/id/tapak/patroli
+          test -f "$JAVA/MainActivity.java"
+          cp native/FileSaverPlugin.java native/MainActivity.java "$JAVA/"
+          grep -q registerPlugin "$JAVA/MainActivity.java"
+
       - name: Atur izin & keamanan AndroidManifest
         run: |
           python3 - <<'PY'
           import re, sys
           p='android/app/src/main/AndroidManifest.xml'
           s=open(p).read()
-          perms=['INTERNET','ACCESS_NETWORK_STATE','ACCESS_FINE_LOCATION','ACCESS_COARSE_LOCATION','CAMERA','READ_MEDIA_IMAGES']
+          perms=['INTERNET','ACCESS_NETWORK_STATE','ACCESS_FINE_LOCATION','ACCESS_COARSE_LOCATION','CAMERA','READ_MEDIA_IMAGES','POST_NOTIFICATIONS','FOREGROUND_SERVICE','FOREGROUND_SERVICE_LOCATION']
           add=''.join(f'    <uses-permission android:name="android.permission.{x}" />\n' for x in perms if f'android.permission.{x}"' not in s)
           add+='    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />\n'
           add+='    <uses-feature android:name="android.hardware.camera" android:required="false" />\n'

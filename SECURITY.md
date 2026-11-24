@@ -2,7 +2,7 @@
 
 ## Versi yang didukung
 
-Hanya rilis terbaru (saat ini **1.3.x**) yang menerima perbaikan keamanan.
+Hanya rilis terbaru (saat ini **1.4.x**) yang menerima perbaikan keamanan.
 
 ## Melaporkan kerentanan
 

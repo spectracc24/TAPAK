@@ -63,6 +63,8 @@
 <symbol id="i-pdf" viewBox="0 0 24 24"><path d="M6 3h8l4 4v14H6z"/><path d="M14 3v4h4"/><path d="M9 13.5h1.6a1.2 1.2 0 0 1 0 2.4H9v-2.4zM13.5 16v-2.5"/></symbol>
 <symbol id="i-sliders" viewBox="0 0 24 24"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/></symbol>
 <symbol id="i-send" viewBox="0 0 24 24"><path d="M21 3L10 14M21 3l-6.5 18-3.5-7-7-3.5z"/></symbol>
+<symbol id="i-pause" viewBox="0 0 24 24"><rect x="6.5" y="5" width="3.6" height="14" rx="1" fill="currentColor"/><rect x="13.9" y="5" width="3.6" height="14" rx="1" fill="currentColor"/></symbol>
+<symbol id="i-play" viewBox="0 0 24 24"><path d="M8 5.2v13.6a.6.6 0 0 0 .9.5l10.5-6.8a.6.6 0 0 0 0-1L8.9 4.7a.6.6 0 0 0-.9.5z" fill="currentColor"/></symbol>
 <symbol id="i-hand" viewBox="0 0 24 24"><path d="M12 21s7-6 7-11a7 7 0 0 0-14 0c0 5 7 11 7 11z"/><path d="M12 7v6M9 10h6"/></symbol>
 </defs></svg>
 <div id=map></div>
@@ -74,7 +76,7 @@
 <div id=compass><svg class=ic id=ar aria-hidden=true><use href=#i-nav></use></svg><span id=hd>--</span></div>
 <div id=fabs>
  <button class="icon-btn fab" onclick=locate() aria-label="Ke lokasi saya"><svg class=ic><use href=#i-locate></use></svg></button>
- <button class="icon-btn fab" onclick=pLayers() aria-label="Peta dan lapisan"><svg class=ic><use href=#i-layers></use></svg></button>
+ <button class="icon-btn fab" id=fab-layers onclick=pLayers() aria-label="Peta dan lapisan"><svg class=ic><use href=#i-layers></use></svg></button>
 </div>
 <div id=dbar hidden><span id=dinfo></span>
  <button class="btn btn-o" onclick=undo()><svg class=ic><use href=#i-undo></use></svg>Urungkan</button>
@@ -85,14 +87,14 @@
  <button onclick=pLayers()><svg class=ic><use href=#i-map></use></svg><span>Peta</span></button>
  <button id=bt onclick=toggleTrack()><svg class=ic><use href=#i-rec></use></svg><span id=nrect>Rekam</span></button>
  <button class=add onclick=pDraw()><i><svg class=ic><use href=#i-plus></use></svg></i><span>Tambah</span></button>
- <button onclick=pList()><svg class=ic><use href=#i-list></use></svg><span>Data</span></button>
+ <button onclick=pListNew()><svg class=ic><use href=#i-list></use></svg><span>Data</span></button>
  <button onclick=pMenu()><svg class=ic><use href=#i-menu></use></svg><span>Lainnya</span></button>
 </nav>
 <div id=welcome hidden><div class=card>
  <p class=eyebrow>Selamat datang</p><h2>Mulai dengan TAPAK</h2><div class=rule3></div>
  <p class=step><b>1</b><span><strong>Pasang peta</strong><br>Tekan <i>Peta</i> lalu <i>Impor peta PDF</i> agar bisa dipakai tanpa sinyal.</span></p>
  <p class=step><b>2</b><span><strong>Tandai temuan</strong><br>Tekan <i>Tambah</i> untuk menandai titik, jalur, atau area.</span></p>
- <p class=step><b>3</b><span><strong>Rekam perjalanan</strong><br>Tekan <i>Rekam</i> saat mulai patroli, tekan lagi saat selesai. Tetap merekam walau layar dikunci atau aplikasi diminimalkan.</span></p>
+ <p class=step><b>3</b><span><strong>Rekam perjalanan</strong><br>Tekan <i>Rekam</i> saat mulai patroli; gunakan <i>Jeda</i> bila berhenti sebentar. Tetap merekam walau layar dikunci atau aplikasi diminimalkan, ditandai notifikasi di bilah status.</span></p>
  <button class="btn btn-p wide" onclick=closeWelcome()>Mulai<svg class=ic><use href=#i-arrow></use></svg></button></div></div>
 <div id=splash>
  <svg class=art viewBox="0 0 420 300" fill=none stroke="#2DB1B7" stroke-width=1.3 aria-hidden=true><ellipse cx="240" cy="150" rx="190" ry="130"/><ellipse cx="240" cy="150" rx="160" ry="108"/><ellipse cx="240" cy="150" rx="130" ry="88"/><ellipse cx="240" cy="150" rx="100" ry="66"/><ellipse cx="240" cy="150" rx="70" ry="44"/><ellipse cx="240" cy="150" rx="40" ry="24"/><ellipse cx="240" cy="150" rx="14" ry="8" stroke="#fff"/></svg>
@@ -107,4 +109,4 @@
 <input type=file id=gal accept="image/*" hidden onchange="addPhoto(this)">
 <script src=lib/leaflet.js></script><script src=lib/pdf.min.js></script><script src=lib/proj4.js></script>
 <script src=lib/jszip.min.js></script><script src=lib/piexif.js></script><script src=lib/shpwrite.js></script>
-<script src=lib/version.js></script><script src=georef.js></script><script src=app.js></script><script src=ui.js></script><script src=perm.js></script></body></html>
+<script src=lib/version.js></script><script src=lib/mark.js></script><script src=lib/egm96.js></script><script src=georef.js></script><script src=app.js></script><script src=ui.js></script><script src=perm.js></script></body></html>
