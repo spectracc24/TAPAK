@@ -263,7 +263,7 @@ window.pSet=()=>{const custAcc=UI.cAcc||!PRE_ACC.includes(S.maxAcc),off=+S.eleOf
  <h4>Akurasi GPS</h4><p class=mut style="margin:0 0 4px">Batas akurasi horizontal</p>
  ${chp('maxAcc',[[10,'10 m'],[20,'20 m'],[32,'32 m'],[50,'50 m'],[0,'Tanpa batas'],['c','Custom']],v=>v==='c'?custAcc:(!custAcc&&S.maxAcc===v))}
  ${custAcc?`<div class=r style="align-items:center"><input type=number inputmode=numeric min=1 max=500 value="${S.maxAcc>0?S.maxAcc:''}" placeholder="meter" oninput="setNum('maxAcc',this.value,1,500)"><span class=mut style="white-space:nowrap">meter</span></div>`:''}
- <p class=lead style="margin:4px 0 8px">Baku 32 m (sama dengan Avenza Maps). Saran: 10 m untuk pengukuran lahan atau batas, 32 m untuk patroli dan navigasi, 50 m bila di bawah kanopi lebat. Titik jejak yang melebihi batas dilewati.</p>
+ <p class=lead style="margin:4px 0 8px">Default 32 m. Saran: 10 m untuk pengukuran lahan atau batas, 32 m untuk patroli dan navigasi, 50 m bila di bawah kanopi lebat. Titik jejak yang melebihi batas dilewati.</p>
  <p class=mut style="margin:0 0 4px">Bila saat menandai titik akurasinya melebihi batas</p>${chp('accAct',[['warn','Beri peringatan'],['block','Blokir'],['off','Abaikan']])}
  <h4>Elevasi</h4><p class=mut style="margin:0 0 4px">Sumber elevasi</p>${chp('eleSrc',[['geoid','Koreksi geoid (MSL)'],['raw','Mentah dari GPS']])}
  <p class=lead style="margin:4px 0 8px">Android memberi tinggi terhadap elipsoid WGS84, bukan muka laut; selisihnya di Pontianak sekitar 32 m. Koreksi geoid EGM96 dihitung di HP tanpa internet. Ketelitian vertikal GPS HP umumnya 2–3× lebih buruk dari horizontal, jadi anggap elevasi sebagai perkiraan.</p>
