@@ -6,7 +6,8 @@ const n = 'node_modules/';
 fs.mkdirSync('www/lib', { recursive: true });
 const files = [
   'leaflet/dist/leaflet.js', 'leaflet/dist/leaflet.css',
-  'pdfjs-dist/build/pdf.min.js', 'pdfjs-dist/build/pdf.worker.min.js',
+  // PDF.js 6.x hanya berbentuk modul ES; build "legacy" dipakai agar jalan di Android WebView lama
+  'pdfjs-dist/legacy/build/pdf.min.mjs', 'pdfjs-dist/legacy/build/pdf.worker.min.mjs',
   'proj4/dist/proj4.js', 'jszip/dist/jszip.min.js',
   'piexifjs/piexif.js', '@mapbox/shp-write/shpwrite.js'
 ]; 
@@ -18,6 +19,10 @@ const fonts = [
   '@fontsource/inter/files/inter-latin-600-normal.woff2'
 ];
 fs.mkdirSync('www/lib/fonts', { recursive: true });
+// Decoder WebAssembly PDF.js (JPEG2000, JBIG2, profil warna ICC) + cadangan tanpa wasm, dimuat lewat wasmUrl 'lib/wasm/'
+const wasm = ['jbig2.wasm', 'jbig2_nowasm_fallback.js', 'openjpeg.wasm', 'openjpeg_nowasm_fallback.js', 'qcms_bg.wasm',
+  'LICENSE_JBIG2', 'LICENSE_OPENJPEG', 'LICENSE_PDFJS_JBIG2', 'LICENSE_PDFJS_OPENJPEG', 'LICENSE_PDFJS_QCMS', 'LICENSE_QCMS'];
+fs.mkdirSync('www/lib/wasm', { recursive: true });
 let gagal = 0;
 for (const f of files) {
   try { fs.copyFileSync(n + f, 'www/lib/' + p.basename(f)); console.log('ok', f); }
@@ -26,6 +31,10 @@ for (const f of files) {
 for (const f of fonts) {
   try { fs.copyFileSync(n + f, 'www/lib/fonts/' + p.basename(f)); console.log('ok', f); }
   catch (e) { gagal++; console.error('GAGAL', f, '-', e.message); }
+}
+for (const f of wasm) {
+  try { fs.copyFileSync(n + 'pdfjs-dist/wasm/' + f, 'www/lib/wasm/' + f); console.log('ok wasm', f); }
+  catch (e) { gagal++; console.error('GAGAL wasm', f, '-', e.message); }
 }
 if (gagal) { console.error(`\n${gagal} berkas gagal disalin. Build dihentikan.`); process.exit(1); }
 
