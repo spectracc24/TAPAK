@@ -6,7 +6,7 @@
 Aplikasi Android untuk pemetaan, navigasi, dan pencatatan lapangan yang bekerja tanpa internet.
 
 > Dikembangkan oleh **Spectra Citra Cendekia (Spectra CC)** · *Science into Sustainable Solutions.*
-
+ 
 ---
 
 ## 1. Tentang Aplikasi
