@@ -1,6 +1,6 @@
 {
   "name": "tapak",
-  "version": "1.4.1",
+  "version": "1.5.0",
   "description": "TAPAK (Teknologi Akuisisi dan Pencatatan Hutan Kita) - dikembangkan oleh Spectra Citra Cendekia (Spectra CC)",
   "author": "Spectra Citra Cendekia (Spectra CC)",
   "private": true,
@@ -8,6 +8,7 @@
     "prepare-www": "node prepare.js",
     "audit:prod": "npm audit --omit=dev --omit=optional",
     "test": "node test/georef.test.js",
+    "test:map": "node test/mapexport.test.js",
     "assets": "node tools/make-assets.js"
   },
   "dependencies": {

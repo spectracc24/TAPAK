@@ -317,3 +317,23 @@ nav button.paused{color:#C98A00}
 .btn-enter:focus-visible{outline:3px solid #7FD6DA;outline-offset:3px}
 @keyframes enter-in{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
 @media (prefers-reduced-motion:reduce){.btn-enter{animation:none}}
+
+/* ===== v1.5: ekspor peta (layout cetak) ===== */
+#mx{position:fixed;inset:0;z-index:2500;background:var(--bg);display:flex;flex-direction:column;padding-top:var(--st)}
+#mx .mxh{display:flex;align-items:center;gap:12px;padding:10px 12px;border-bottom:1px solid var(--line)}
+#mx .mxh h3{margin:0;font-weight:800;font-size:20px}
+#mx .mxb{flex:1;overflow:auto;padding:4px 16px 24px}
+#mx .mxf{padding:10px 16px calc(10px + var(--sb));border-top:1px solid var(--line);background:var(--card)}
+#mx .mxpv{margin-top:12px;border:1px solid var(--line);border-radius:10px;background:var(--surface);padding:8px;display:grid;place-items:center;min-height:120px}
+#mx .mxcv{width:100%;height:auto;display:block;box-shadow:0 2px 10px rgba(23,50,77,.25);background:#fff}
+#mx .mxst{margin:8px 0 0}#mx .mxw{color:var(--err);font-weight:600}
+#mx input:not([type=range]):not([type=checkbox]),#mx textarea{width:100%;min-height:46px;padding:10px 12px;margin:4px 0;border:1.5px solid var(--line);border-radius:6px;font:400 16px var(--bf);background:var(--card);color:var(--ink)}
+#mx input:focus,#mx textarea:focus{outline:0;border-color:var(--teal);box-shadow:0 0 0 3px color-mix(in srgb,var(--teal) 22%,transparent)}
+#mx .sw input[type=checkbox]{position:absolute;opacity:0;width:0;height:0}
+#mx .sw{position:relative}
+#mx .lead{color:var(--muted);font-size:13.5px;margin:6px 0 0}
+#mx .mxl{max-height:240px;overflow:auto;border:1px solid var(--line);border-radius:10px;padding:0 10px;margin-top:6px}
+#mx .mxl .item:last-child{border-bottom:0}
+#mx .mxprog{position:relative;height:26px;border-radius:6px;background:var(--soft);overflow:hidden;margin-bottom:10px}
+#mx .mxprog i{position:absolute;inset:0 auto 0 0;background:var(--teal);opacity:.35;transition:width .2s}
+#mx .mxprog span{position:relative;display:block;text-align:center;font:600 13px/26px var(--bf);color:var(--head)}

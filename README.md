@@ -41,6 +41,7 @@ TAPAK dibuat sebagai alternatif ringan untuk aplikasi peta lapangan berbayar. Ap
 - **Navigasi ke titik tujuan:** jarak dan arah dari posisi saat ini.
 - **Sistem koordinat:** derajat desimal (WGS84), derajat-menit-detik, dan UTM. Ketuk kotak koordinat di kiri atas untuk berganti.
 - **Ekspor data:** GeoJSON, KMZ, dan SHP (zip). Pilih semua, terpilih, atau yang tampil; **Simpan ke perangkat** (dialog “Simpan sebagai” Android) atau **Bagikan**. Elevasi, akurasi GPS, dan simbol ikut sebagai atribut.
+- **Ekspor peta berlayout (v1.5):** Lainnya → Ekspor peta. Kertas A4, A3, atau custom (cm), lanskap/portrait; judul, deskripsi, nama pembuat, tanggal ekspor; pilih data lapangan, basemap online (jalan, kontur, satelit) dan/atau peta PDF offline; label data (nama, elevasi, panjang/luas); grid koordinat (derajat, DMS, UTM); arah utara, skala, logo TAPAK dan Spectra CC beserta keterangan sumber. Hasil PDF, PNG, atau JPEG berukuran kertas sebenarnya (metadata DPI tertanam). Kode: `www/mapexport.js` (mesin), `www/mapexport-ui.js` (panel); uji: `npm run test:map`.
 - **Pengaturan** lengkap dengan tombol **Kembalikan ke default**.
 
 ## 3. Teknologi dan Package

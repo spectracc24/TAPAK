@@ -365,10 +365,10 @@ const stamp = () => { const d = new Date(), p = n => String(n).padStart(2, '0');
 async function purgeExports() {
   if (!native) return; try {
     const Filesystem = plug('Filesystem'), r = await Filesystem.readdir({ path: '', directory: 'CACHE' });
-    for (const f of r.files || []) { const nm = f.name || f; if (/^patroli.*\.(geojson|kmz|zip)$/.test(nm)) await Filesystem.deleteFile({ path: nm, directory: 'CACHE' }).catch(() => { }) }
+    for (const f of r.files || []) { const nm = f.name || f; if (/^(patroli|peta).*\.(geojson|kmz|zip|png|jpg|pdf)$/.test(nm)) await Filesystem.deleteFile({ path: nm, directory: 'CACHE' }).catch(() => { }) }
   } catch (e) { }
 }
-const MIME = { geojson: 'application/geo+json', kmz: 'application/vnd.google-earth.kmz', zip: 'application/zip' };
+const MIME = { geojson: 'application/geo+json', kmz: 'application/vnd.google-earth.kmz', zip: 'application/zip', png: 'image/png', jpg: 'image/jpeg', pdf: 'application/pdf' };
 // how: 'save' = simpan ke perangkat (dialog "Simpan sebagai" Android), 'share' = menu Bagikan
 async function out(name, blob, how) {
   if (!native) { const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; a.click(); toast('Berkas diunduh: ' + name); return true }

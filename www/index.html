@@ -6,7 +6,7 @@
     <meta name=viewport
         content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
     <meta http-equiv=Content-Security-Policy
-        content="default-src 'self'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://*.tile.openstreetmap.org https://tile.openstreetmap.org https://*.tile.opentopomap.org https://server.arcgisonline.com; worker-src 'self' blob:; connect-src 'self' data: blob:; object-src 'none'; base-uri 'none'; form-action 'none'">
+        content="default-src 'self'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://*.tile.openstreetmap.org https://tile.openstreetmap.org https://tile.opentopomap.org https://*.tile.opentopomap.org https://server.arcgisonline.com; worker-src 'self' blob:; connect-src 'self' data: blob:; object-src 'none'; base-uri 'none'; form-action 'none'">
     <meta name=theme-color content="#17324d">
     <title>TAPAK · Spectra CC</title>
     <link rel=stylesheet href=lib/leaflet.css>
@@ -259,6 +259,11 @@
                 <path d="M8 5.2v13.6a.6.6 0 0 0 .9.5l10.5-6.8a.6.6 0 0 0 0-1L8.9 4.7a.6.6 0 0 0-.9.5z"
                     fill="currentColor" />
             </symbol>
+            <symbol id="i-layout" viewBox="0 0 24 24">
+                <rect x="4" y="3" width="16" height="18" rx="1.5" />
+                <path d="M7 6.5h6M7 9h9" />
+                <rect x="7" y="12" width="10" height="6" rx=".8" />
+            </symbol>
             <symbol id="i-hand" viewBox="0 0 24 24">
                 <path d="M12 21s7-6 7-11a7 7 0 0 0-14 0c0 5 7 11 7 11z" />
                 <path d="M12 7v6M9 10h6" />
@@ -367,6 +372,8 @@
     <script src=georef.js></script>
     <script src=app.js></script>
     <script src=ui.js></script>
+    <script src=mapexport.js></script>
+    <script src=mapexport-ui.js></script>
     <script src=perm.js></script>
 </body>
 
