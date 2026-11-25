@@ -194,6 +194,7 @@ async function mxDraftDel(id) {
 function mxSave() { const o = {}; MX_KEEP.forEach(k => o[k] = MX[k]); kv.set('MX', o).catch(() => { }) }
 
 window.pMapExport = async () => {
+  return toast('Fitur ekspor peta berlayout sedang dalam pengembangan (Coming soon)');
   closeSheet(); const sv = await kvg('MX') || {}; MXDR = await kvg('MXDR') || []; MXCUR = null;
   MX = { ...MXD, grid: { dd: 'dd', dms: 'dms', utm: 'utm' }[S.coord] || 'dd', base: MXB[S.base] ? S.base : 'none', ...sv, viewB: null };
   if (typeof navigator.onLine == 'boolean' && !navigator.onLine && PM.length) MX.base = 'none';

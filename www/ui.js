@@ -152,7 +152,7 @@ window.pLayers = keep => {
  <button class="btn btn-o sm" onclick="pListNew()">${I('list')}Kelola…</button></div></div>
  <h4>Peta PDF (tanpa internet)</h4><button class="btn btn-p wide" onclick="$('#pdfin').click()">${I('plus')}Impor peta PDF</button>
  ${PM.length ? PM.map(pmCard).join('') : '<p class=lead style="margin-top:12px">Belum ada peta PDF. Gunakan GeoPDF hasil ekspor ArcMap atau QGIS.</p>'}
- <h4>Cetak &amp; laporan</h4><button class="btn btn-o wide" onclick="pMapExport()">${I('layout')}Ekspor peta berlayout (PDF/PNG/JPEG)</button>`, '', keep === true)
+ <h4>Cetak &amp; laporan</h4><button class="btn btn-o wide" disabled>${I('layout')}Ekspor peta berlayout (PDF/PNG/JPEG) · Coming soon</button>`, '', keep === true)
 };
 let nudgeStep = 5;
 window.pNudge = (id, keep) => {
@@ -337,7 +337,7 @@ window.resetS = async () => {
 };
 
 // ---------- menu lainnya, bantuan, tentang ----------
-window.pMenu = () => sheet(`<h3>Lainnya</h3><div class=grid>${T('sliders', 'Pengaturan', 'pSet()')}${T('export', 'Simpan &amp; bagikan data', 'pExport()')}${T('layout', 'Ekspor peta (PDF/PNG/JPEG)', 'pMapExport()')}${T('help', 'Cara pakai', 'pHelp()')}${T('mail', 'Laporkan bug / penyalahgunaan', 'pReport()')}${T('info', 'Tentang TAPAK', 'pAbout()')}</div>
+window.pMenu = () => sheet(`<h3>Lainnya</h3><div class=grid>${T('sliders', 'Pengaturan', 'pSet()')}${T('export', 'Simpan &amp; bagikan data', 'pExport()')}<button class="tile" disabled>${ICO('layout')}<span>Ekspor peta (PDF/PNG/JPEG) · Coming soon</span></button>${T('help', 'Cara pakai', 'pHelp()')}${T('mail', 'Laporkan bug / penyalahgunaan', 'pReport()')}${T('info', 'Tentang TAPAK', 'pAbout()')}</div>
  <p class=foot>TAPAK v${esc(window.APP_VER || '')} · dikembangkan oleh Spectra CC</p>`);
 window.pHelp = () => sheet(`<h3>Cara pakai</h3>
  <h4>Peta tanpa sinyal</h4><p>Peta → Impor peta PDF → pilih berkas GeoPDF dari HP. Tombol <b>Sembunyikan/Tampilkan</b> mengatur peta PDF di layar; lapisan yang disembunyikan diberi label <b>Tersembunyi</b> dan tombol lapisan di peta bertitik.</p>
@@ -347,7 +347,7 @@ window.pHelp = () => sheet(`<h3>Cara pakai</h3>
  <h4>Banyak data di peta</h4><p>Data saya → ikon mata menyembunyikan satu objek; <b>Pilih</b> untuk menyembunyikan, mengubah simbol, mengekspor, atau menghapus beberapa objek sekaligus. Di Pengaturan, label nama bisa disembunyikan dan warna bisa otomatis menurut “Jenis”.</p>
  <h4>Mengukur &amp; menuju titik</h4><p>Tambah → Ukur jarak / Ukur luas. Buka data → Tuju ke sini: jarak, arah, dan selisih elevasi tampil di atas.</p>
  <h4>Menyimpan &amp; mengirim data</h4><p>Lainnya → Simpan &amp; bagikan data: pilih semua atau sebagian objek, format GeoJSON/KMZ/SHP, lalu <b>Simpan ke perangkat</b> atau <b>Bagikan</b>.</p>
- <h4>Ekspor peta (layout cetak)</h4><p>Lainnya → Ekspor peta. Pilih kertas A4/A3/custom (lanskap atau portrait), isi judul, deskripsi, dan nama pembuat, pilih data lapangan, basemap online atau peta PDF, grid koordinat, ukuran font label, lalu simpan sebagai PDF, PNG, atau JPEG. Tanpa sinyal, pakai peta PDF sebagai basemap. Pengaturan layout bisa disimpan sebagai <b>draft</b> dan diubah lagi nanti; draft yang sudah diekspor otomatis dihapus.</p>\n <h4>Melaporkan bug atau penyalahgunaan</h4><p>Lainnya → Laporkan bug / penyalahgunaan. Pilih jenis laporan, tulis deskripsi, centang captcha, lalu kirim. Butuh internet.</p>
+ <h4>Ekspor peta (layout cetak)</h4><p>Fitur ekspor peta berlayout ke PDF, PNG, dan JPEG sedang dalam pengembangan (Coming soon).</p>\n <h4>Melaporkan bug atau penyalahgunaan</h4><p>Lainnya → Laporkan bug / penyalahgunaan. Pilih jenis laporan, tulis deskripsi, centang captcha, lalu kirim. Butuh internet.</p>
  <h4>Ganti format koordinat</h4><p>Ketuk kotak koordinat di kiri atas, atau lewat Pengaturan.</p>`);
 window.pAbout = () => sheet(`<div class=about>${APPMARK('appmark')}<h3>TAPAK</h3><p class=tg>Teknologi Akuisisi dan Pencatatan Hutan Kita</p><p class=lead>Every Track Tells a Story.<br>Peta, jejak, dan catatan lapangan untuk perlindungan hutan berbasis masyarakat. Bekerja tanpa internet.</p>
  <div class=byline><small>Dikembangkan oleh</small><span class=logo>${LOGO}</span>
