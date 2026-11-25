@@ -398,56 +398,72 @@ function geom(f, z) {
   if (f.type == 'Polygon') return { type: 'Polygon', coordinates: [[...all, all[0]]] };
   const ps = parts(all, f.brk); return ps.length > 1 ? { type: 'MultiLineString', coordinates: ps } : { type: 'LineString', coordinates: all }
 }
-function featProps(f, trunc, photos) {
+function photoFileName(f, p, i) {
+  const raw = String(p.name || `foto_${i + 1}.jpg`).split(/[\\/]/).pop();
+  const safe = raw.normalize('NFKD').replace(/[^a-zA-Z0-9._-]+/g, '_').replace(/^\.+/, '') || `foto_${i + 1}.jpg`;
+  return `${String(f.id)}_${String(p.id ?? i + 1)}_${safe}`;
+}
+function photoPathMap(list, prefix) {
+  const map = new Map();
+  list.forEach(f => (f.photos || []).forEach((p, i) => map.set(`${f.id}:${p.id ?? i}`, `${prefix}/${photoFileName(f, p, i)}`)));
+  return map;
+}
+function featProps(f, trunc, photos, paths) {
   const p = { nama: f.props.name, deskripsi: f.props.desc };
-  for (const [k, v] of Object.entries(f.props.custom)) p[trunc ? k.slice(0, 10) : k] = v;
+  for (const [k, v] of Object.entries(f.props.custom || {})) p[trunc ? k.slice(0, 10) : k] = v;
   const sy = symOf(f); p.simbol = f.type == 'Point' ? sy.sh : f.type == 'LineString' ? sy.ln : 'area'; p.warna = sy.c;
   if (f.type == 'Point') { if (zOf(f, 0) != null) p.elevasi = +zOf(f, 0).toFixed(1); if (f.acc != null) p.akurasi = f.acc }
   else if (f.type == 'LineString') { p.panjang_m = +lenF(f).toFixed(1); const st = eleStats(f.ele); if (st) { p.naik_m = +st.gain.toFixed(1); p.turun_m = +st.loss.toFixed(1) } if (f.trk) p.durasi_s = Math.round(f.trk.dur / 1000) }
   else { p.luas_m2 = +area(f.coords).toFixed(1); p.kel_m = +len([...f.coords, f.coords[0]]).toFixed(1) }
-  p.foto = photos ? f.photos.map(x => x.name).join(';') : ''; return p
+  const refs = photos ? (f.photos || []).map((x, i) => paths.get(`${f.id}:${x.id ?? i}`)).filter(Boolean) : [];
+  p.foto = refs.join(';'); p.foto_paths = refs; p.jumlah_foto = refs.length;
+  return p
 }
-const gj = (list, o) => ({ type: 'FeatureCollection', features: list.map(f => ({ type: 'Feature', properties: featProps(f, o.trunc, o.photos), geometry: geom(f, o.z) })) });
+const gj = (list, o) => ({ type: 'FeatureCollection', features: list.map(f => ({ type: 'Feature', properties: featProps(f, o.trunc, o.photos, o.paths), geometry: geom(f, o.z) })) });
 const kmlC = (hex, a = 'ff') => a + hex.slice(5, 7) + hex.slice(3, 5) + hex.slice(1, 3);
+function makeKml(list, photos, paths, prefix) {
+  let k = '<?xml version="1.0" encoding="UTF-8"?><kml xmlns="http://www.opengis.net/kml/2.2"><Document><name>Patroli TAPAK</name><description>Dibuat dengan TAPAK · Spectra CC</description>';
+  list.forEach(f => {
+    const sy = symOf(f), co = f.coords.map((c, i) => c[0] + ',' + c[1] + ',' + (zOf(f, i) ?? 0)), ring = [...co, co[0]].join(' ');
+    const ln = p => `<LineString><coordinates>${p.join(' ')}</coordinates></LineString>`;
+    let g; if (f.type == 'Point') g = `<Point><coordinates>${co[0]}</coordinates></Point>`;
+    else if (f.type == 'Polygon') g = `<Polygon><outerBoundaryIs><LinearRing><coordinates>${ring}</coordinates></LinearRing></outerBoundaryIs></Polygon>`;
+    else { const ps = parts(co, f.brk); g = ps.length > 1 ? `<MultiGeometry>${ps.map(ln).join('')}</MultiGeometry>` : ln(co) }
+    const stl = f.type == 'Point' ? `<Style><IconStyle><color>${kmlC(sy.c)}</color><scale>1.1</scale><Icon><href>https://maps.google.com/mapfiles/kml/shapes/placemark_circle.png</href></Icon></IconStyle></Style>` : `<Style><LineStyle><color>${kmlC(sy.c)}</color><width>3</width></LineStyle><PolyStyle><color>${kmlC(sy.c, '55')}</color></PolyStyle></Style>`;
+    const ex = { ...(f.props.custom || {}) }; if (zOf(f, 0) != null && f.type == 'Point') ex.Elevasi = zOf(f, 0).toFixed(1) + ' m'; if (f.acc != null) ex['Akurasi GPS'] = '±' + f.acc + ' m'; ex.Simbol = f.type == 'Point' ? SHAPES[sy.sh] : LNSTY[sy.ln][0];
+    const photosOf = photos ? (f.photos || []).map((p, i) => paths.get(`${f.id}:${p.id ?? i}`)).filter(Boolean) : [];
+    photosOf.forEach((path, i) => { ex[`Foto_${i + 1}`] = path });
+    const ed = Object.entries(ex).map(([a, b]) => `<Data name="${esc(a)}"><value>${esc(b)}</value></Data>`).join('');
+    const im = photosOf.map(path => `<div><img src="${path}" width="400"/></div>`).join('');
+    const desc = `${esc(f.props.desc || '').replace(/\n/g, '<br/>')}${im ? '<br/>' + im : ''}`.replace(/]]>/g, ']]&gt;');
+    k += `<Placemark><name>${esc(f.props.name || f.type)}</name><description><![CDATA[${desc}]]></description>${stl}<ExtendedData>${ed}</ExtendedData>${g}</Placemark>`;
+  });
+  return k + '</Document></kml>';
+}
+async function addPhotoAssets(zip, list, prefix) {
+  list.forEach(f => (f.photos || []).forEach((p, i) => {
+    const data = String(p.data || ''); const b64 = data.includes(',') ? data.slice(data.indexOf(',') + 1) : data;
+    if (!b64) return;
+    zip.file(`${prefix}/${photoFileName(f, p, i)}`, b64, { base64: true });
+  }));
+}
 async function exportData(fmt, how, list, photos) {
   if (!list.length) return toast('Tidak ada data yang dipilih untuk diekspor');
   const base = 'patroli_' + stamp();
   try {
-    if (fmt == 'geojson') return await out(base + '.geojson', new Blob([JSON.stringify({ ...gj(list, { photos, z: true }), generator: 'TAPAK - Spectra CC (Spectra Citra Cendekia)' }, null, 1)], { type: 'application/geo+json' }), how);
-    if (fmt == 'kmz') {
-      const z = new JSZip(); let k = '<?xml version="1.0" encoding="UTF-8"?><kml xmlns="http://www.opengis.net/kml/2.2"><Document><name>Patroli</name><description>Dibuat dengan TAPAK · Spectra CC (Spectra Citra Cendekia)</description>';
-      list.forEach(f => {
-        const sy = symOf(f), co = f.coords.map((c, i) => c[0] + ',' + c[1] + ',' + (zOf(f, i) ?? 0)), ring = [...co, co[0]].join(' ');
-        const ln = (p) => `<LineString><coordinates>${p.join(' ')}</coordinates></LineString>`;
-        let g; if (f.type == 'Point') g = `<Point><coordinates>${co[0]}</coordinates></Point>`;
-        else if (f.type == 'Polygon') g = `<Polygon><outerBoundaryIs><LinearRing><coordinates>${ring}</coordinates></LinearRing></outerBoundaryIs></Polygon>`;
-        else { const ps = parts(co, f.brk); g = ps.length > 1 ? `<MultiGeometry>${ps.map(ln).join('')}</MultiGeometry>` : ln(co) }
-        const stl = f.type == 'Point' ? `<Style><IconStyle><color>${kmlC(sy.c)}</color><scale>1.1</scale><Icon><href>https://maps.google.com/mapfiles/kml/shapes/placemark_circle.png</href></Icon></IconStyle></Style>`
-          : `<Style><LineStyle><color>${kmlC(sy.c)}</color><width>3</width></LineStyle><PolyStyle><color>${kmlC(sy.c, '55')}</color></PolyStyle></Style>`;
-        const ex = { ...f.props.custom }; if (zOf(f, 0) != null && f.type == 'Point') ex.Elevasi = zOf(f, 0).toFixed(1) + ' m'; if (f.acc != null) ex['Akurasi GPS'] = '±' + f.acc + ' m'; ex.Simbol = f.type == 'Point' ? SHAPES[sy.sh] : LNSTY[sy.ln][0];
-        const ed = Object.entries(ex).map(([a, b]) => `<Data name="${esc(a)}"><value>${esc(b)}</value></Data>`).join('');
-        const im = photos ? f.photos.map(p => { z.file('files/' + p.name, p.data.split(',')[1], { base64: true }); return `<img src="files/${p.name}" width="400"/>` }).join('') : '';
-        k += `<Placemark><name>${esc(f.props.name || f.type)}</name><description><![CDATA[${esc(f.props.desc || '').replace(/\n/g, '<br/>')}<br/>${im}]]></description>${stl}<ExtendedData>${ed}</ExtendedData>${g}</Placemark>`
-      });
-      z.file('doc.kml', k + '</Document></kml>'); return await out(base + '.kmz', await z.generateAsync({ type: 'blob' }), how)
-    }
-    if (fmt == 'shp') {
-      if (!window.shpwrite) return toast('Modul SHP tidak termuat');
-      // shp-write 0.4.3 menggabungkan SEMUA jalur menjadi satu record multi-part (atribut tetap satu baris per jalur, jadi tidak sinkron).
-      // Titik & area ditulis lewat zip() biasa; jalur ditulis lewat write() tingkat rendah: satu record per jalur,
-      // jejak yang pernah dijeda menjadi satu record multi-part.
-      const all = gj(list, { trunc: true, photos }), isL = f => /LineString/.test(f.geometry.type), lines = all.features.filter(isL), rest = { type: 'FeatureCollection', features: all.features.filter(f => !isL(f)) };
-      const b64 = await shpwrite.zip(rest, { folder: 'patroli', types: { point: 'titik', polygon: 'poligon' } }), z = await JSZip.loadAsync(b64, { base64: true });
-      if (lines.length) await new Promise((res, rej) => {
-        try {
-          shpwrite.write(lines.map(f => f.properties), 'POLYLINE', lines.map(f => f.geometry.type == 'LineString' ? [f.geometry.coordinates] : f.geometry.coordinates), (err, files) => {
-            if (err) return rej(err); const d = z.folder('patroli'); for (const e of ['shp', 'shx', 'dbf']) d.file('garis.' + e, files[e].buffer, { binary: true }); d.file('garis.prj', files.prj); res()
-          })
-        } catch (e) { rej(e) }
-      });
-      if (photos) list.forEach(f => f.photos.forEach(p => z.file('patroli/foto/' + p.name, p.data.split(',')[1], { base64: true })));
-      return await out(base + '_shp.zip', await z.generateAsync({ type: 'blob' }), how)
-    }
+    const zip = new JSZip(), outerPaths = photoPathMap(list, 'attachments/foto'), kmzPaths = photoPathMap(list, 'files/foto');
+    const geo = { ...gj(list, { photos, z: true, paths: outerPaths }), generator: 'TAPAK - Spectra CC (Spectra Citra Cendekia)' };
+    const kml = makeKml(list, photos, outerPaths, 'attachments/foto');
+    const kmz = new JSZip();
+    kmz.file('doc.kml', makeKml(list, photos, kmzPaths, 'files/foto'));
+    if (photos) await addPhotoAssets(kmz, list, 'files/foto');
+    zip.file(`${base}.geojson`, JSON.stringify(geo, null, 2));
+    zip.file(`${base}.kml`, kml);
+    zip.file(`${base}.kmz`, await kmz.generateAsync({ type: 'uint8array', compression: 'DEFLATE' }));
+    if (photos) await addPhotoAssets(zip, list, 'attachments/foto');
+    zip.file('README.txt', `TAPAK — Paket ekspor data spasial\n\nIsi paket:\n- ${base}.geojson: fitur spasial beserta atribut foto_paths (array path relatif)\n- ${base}.kml: data untuk aplikasi yang mendukung KML; foto dirujuk relatif ke attachments/foto/\n- ${base}.kmz: KML dan foto dikemas bersama agar dapat dibuka mandiri\n- attachments/foto/: seluruh foto lampiran\n\nSetiap fitur memiliki atribut foto_paths (array), foto (daftar path dipisahkan titik koma), dan jumlah_foto. Path foto relatif terhadap lokasi file spasial.\n`);
+    const blob = await zip.generateAsync({ type: 'blob', compression: 'DEFLATE', compressionOptions: { level: 6 } });
+    return await out(base + '.zip', blob, how);
   } catch (e) { console.error(e); toast('Ekspor gagal: ' + (e.message || e)) }
 }
 // ---------- start ----------

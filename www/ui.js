@@ -275,13 +275,13 @@ window.pExport = scope => {
   if (scope) EX.scope = scope; if (EX.scope == 'sel' && !LS.ids.size) EX.scope = 'all';
   const l = exList(), np = l.reduce((s, f) => s + f.photos.length, 0), nv = F.filter(isVis).length;
   const sc = (k, t, n) => `<button class="${EX.scope == k ? 'on' : ''}" onclick="EX.scope='${k}';pExport()" ${n ? '' : 'disabled'}>${t} (${n})</button>`;
-  sheet(`<h3>Simpan &amp; bagikan data</h3><h4>Data yang diekspor</h4>
+  sheet(`<h3>Ekspor paket data</h3><h4>Data yang diekspor</h4>
  <div class=chips>${sc('all', 'Semua', F.length)}${sc('sel', 'Terpilih', LS.ids.size)}${sc('vis', 'Yang tampil', nv)}</div>
  <div class=row style="margin-top:0"><button class="btn btn-o sm" onclick="LS.sel=true;pList()">${I('check')}Pilih data tertentu…</button></div>
- <h4>Format</h4><div class=grid>${[['geojson', 'globe', 'GeoJSON'], ['kmz', 'layers', 'KMZ (Google Earth)'], ['shp', 'db', 'SHP (ArcGIS/QGIS)']].map(([k, i, t]) => T(i, t, `EX.fmt='${k}';pExport()`, EX.fmt == k ? 'sel' : '')).join('')}</div>
- <label class=sw><span>Sertakan foto<small>${EX.fmt == 'geojson' ? 'GeoJSON hanya memuat nama berkas foto' : 'Foto ikut di dalam berkas'}</small></span><input type=checkbox ${EX.photos ? 'checked' : ''} onchange="EX.photos=this.checked"><i></i></label>
- <div class=row><button class="btn btn-p" style="flex:1" ${l.length ? '' : 'disabled'} onclick="exportData(EX.fmt,'save',exList(),EX.photos)">${I('save')}Simpan ke perangkat</button>
- <button class="btn btn-o" style="flex:1" ${l.length ? '' : 'disabled'} onclick="exportData(EX.fmt,'share',exList(),EX.photos)">${I('send')}Bagikan…</button></div>
+ <h4>Paket ekspor</h4><div class=info>ZIP berisi GeoJSON, KML, KMZ, dan seluruh lampiran foto. Setiap fitur menyimpan path relatif foto; satu objek dapat memiliki beberapa foto.</div>
+ <label class=sw><span>Sertakan foto<small>Foto dikemas di folder attachments/foto dan disertakan di dalam KMZ</small></span><input type=checkbox ${EX.photos ? 'checked' : ''} onchange="EX.photos=this.checked"><i></i></label>
+ <div class=row><button class="btn btn-p" style="flex:1" ${l.length ? '' : 'disabled'} onclick="exportData('zip','save',exList(),EX.photos)">${I('save')}Simpan ke perangkat</button>
+ <button class="btn btn-o" style="flex:1" ${l.length ? '' : 'disabled'} onclick="exportData('zip','share',exList(),EX.photos)">${I('send')}Bagikan…</button></div>
  <p class=lead style="margin-top:10px">${l.length} objek · ${np} foto akan diekspor. <b>Simpan ke perangkat</b> membuka dialog “Simpan sebagai” Android agar Anda memilih folder; <b>Bagikan</b> membuka menu aplikasi (WhatsApp, Drive, dll). Elevasi, akurasi GPS, dan simbol ikut tercatat sebagai atribut.</p>`, '', true)
 };
 
@@ -337,7 +337,7 @@ window.resetS = async () => {
 };
 
 // ---------- menu lainnya, bantuan, tentang ----------
-window.pMenu = () => sheet(`<h3>Lainnya</h3><div class=grid>${T('sliders', 'Pengaturan', 'pSet()')}${T('export', 'Simpan &amp; bagikan data', 'pExport()')}<button class="tile soon-tile" type=button disabled aria-disabled=true>${ICO('layout')}<span>Ekspor peta (PDF/PNG/JPEG)</span><span class="soon-tag">COMING SOON · BELUM AKTIF</span></button>${T('help', 'Cara pakai', 'pHelp()')}${T('mail', 'Laporkan bug / penyalahgunaan', 'pReport()')}${T('info', 'Tentang TAPAK', 'pAbout()')}</div>
+window.pMenu = () => sheet(`<h3>Lainnya</h3><div class=grid>${T('sliders', 'Pengaturan', 'pSet()')}${T('export', 'Ekspor paket data', 'pExport()')}<button class="tile soon-tile" type=button disabled aria-disabled=true>${ICO('layout')}<span>Ekspor peta (PDF/PNG/JPEG)</span><span class="soon-tag">COMING SOON · BELUM AKTIF</span></button>${T('help', 'Cara pakai', 'pHelp()')}${T('mail', 'Laporkan bug / penyalahgunaan', 'pReport()')}${T('info', 'Tentang TAPAK', 'pAbout()')}</div>
  <p class=foot>TAPAK v${esc(window.APP_VER || '')} · dikembangkan oleh Spectra CC</p>`);
 window.pHelp = () => sheet(`<h3>Cara pakai</h3>
  <h4>Peta tanpa sinyal</h4><p>Peta → Impor peta PDF → pilih berkas GeoPDF dari HP. Tombol <b>Sembunyikan/Tampilkan</b> mengatur peta PDF di layar; lapisan yang disembunyikan diberi label <b>Tersembunyi</b> dan tombol lapisan di peta bertitik.</p>
@@ -346,7 +346,7 @@ window.pHelp = () => sheet(`<h3>Cara pakai</h3>
  <h4>Merekam jalur patroli</h4><p>Tekan Rekam. Tombol <b>Jeda</b> di bilah merah (atau di panel Rekaman) menghentikan pencatatan sementara; jarak selama jeda tidak dihitung. Rekaman <b>tetap berjalan</b> saat layar dikunci atau TAPAK diminimalkan, ditandai notifikasi hijau “Sedang tracking” di bilah status (berganti oranye “Track dijeda” saat dijeda, dan hilang saat dihentikan). Izinkan notifikasi bila diminta. Di HP Xiaomi, Oppo, Vivo, atau Samsung, atur Baterai TAPAK ke “Tanpa batasan”.</p>
  <h4>Banyak data di peta</h4><p>Data saya → ikon mata menyembunyikan satu objek; <b>Pilih</b> untuk menyembunyikan, mengubah simbol, mengekspor, atau menghapus beberapa objek sekaligus. Di Pengaturan, label nama bisa disembunyikan dan warna bisa otomatis menurut “Jenis”.</p>
  <h4>Mengukur &amp; menuju titik</h4><p>Tambah → Ukur jarak / Ukur luas. Buka data → Tuju ke sini: jarak, arah, dan selisih elevasi tampil di atas.</p>
- <h4>Menyimpan &amp; mengirim data</h4><p>Lainnya → Simpan &amp; bagikan data: pilih semua atau sebagian objek, format GeoJSON/KMZ/SHP, lalu <b>Simpan ke perangkat</b> atau <b>Bagikan</b>.</p>
+ <h4>Menyimpan &amp; mengirim data</h4><p>Lainnya → Ekspor paket data: pilih semua atau sebagian objek, format GeoJSON/KMZ/SHP, lalu <b>Simpan ke perangkat</b> atau <b>Bagikan</b>.</p>
  <h4>Ekspor peta (layout cetak)</h4><p>Fitur ekspor peta berlayout ke PDF, PNG, dan JPEG sedang dalam pengembangan (Coming soon).</p>\n <h4>Melaporkan bug atau penyalahgunaan</h4><p>Lainnya → Laporkan bug / penyalahgunaan. Pilih jenis laporan, tulis deskripsi, centang captcha, lalu kirim. Butuh internet.</p>
  <h4>Ganti format koordinat</h4><p>Ketuk kotak koordinat di kiri atas, atau lewat Pengaturan.</p>`);
 window.pAbout = () => sheet(`<div class=about>${APPMARK('appmark')}<h3>TAPAK</h3><p class=tg>Teknologi Akuisisi dan Pencatatan Hutan Kita</p><p class=lead>Every Track Tells a Story.<br>Peta, jejak, dan catatan lapangan untuk perlindungan hutan berbasis masyarakat. Bekerja tanpa internet.</p>

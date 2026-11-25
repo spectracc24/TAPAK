@@ -303,7 +303,7 @@ nav button.paused{color:#C98A00}
 .sw input:checked+i{background:var(--teal)}
 .sw input:checked+i::after{transform:translateX(18px)}
 .sw input:focus-visible+i{outline:2px solid var(--teal);outline-offset:2px}
-#dlg{position:fixed;inset:0;z-index:4600;background:rgba(10,24,39,.62);display:flex;align-items:center;justify-content:center;padding:18px}
+#dlg{position:fixed;inset:0;z-index:6000;background:rgba(10,24,39,.62);display:flex;align-items:center;justify-content:center;padding:18px}
 #dlg .card h2{font-size:22px}
 #dlg input{width:100%;min-height:46px;padding:10px 12px;margin:4px 0 6px;border:1.5px solid var(--line);border-radius:6px;font:400 16px var(--bf);background:var(--card);color:var(--ink)}
 .dlgb{display:flex;gap:10px;justify-content:flex-end;margin-top:16px}
