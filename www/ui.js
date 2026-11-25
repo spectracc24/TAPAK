@@ -273,16 +273,17 @@ const EX = { scope: 'all', fmt: 'geojson', photos: true };
 const exList = () => EX.scope == 'sel' ? F.filter(f => LS.ids.has(f.id)) : EX.scope == 'vis' ? F.filter(isVis) : F;
 window.pExport = scope => {
   if (scope) EX.scope = scope; if (EX.scope == 'sel' && !LS.ids.size) EX.scope = 'all';
-  const l = exList(), np = l.reduce((s, f) => s + f.photos.length, 0), nv = F.filter(isVis).length;
+  const l = exList(), np = l.reduce((s, f) => s + (f.photos || []).length, 0), nv = F.filter(isVis).length;
   const sc = (k, t, n) => `<button class="${EX.scope == k ? 'on' : ''}" onclick="EX.scope='${k}';pExport()" ${n ? '' : 'disabled'}>${t} (${n})</button>`;
   sheet(`<h3>Ekspor paket data</h3><h4>Data yang diekspor</h4>
  <div class=chips>${sc('all', 'Semua', F.length)}${sc('sel', 'Terpilih', LS.ids.size)}${sc('vis', 'Yang tampil', nv)}</div>
  <div class=row style="margin-top:0"><button class="btn btn-o sm" onclick="LS.sel=true;pList()">${I('check')}Pilih data tertentu…</button></div>
- <h4>Paket ekspor</h4><div class=info>ZIP berisi GeoJSON, KML, KMZ, dan seluruh lampiran foto. Setiap fitur menyimpan path relatif foto; satu objek dapat memiliki beberapa foto.</div>
- <label class=sw><span>Sertakan foto<small>Foto dikemas di folder attachments/foto dan disertakan di dalam KMZ</small></span><input type=checkbox ${EX.photos ? 'checked' : ''} onchange="EX.photos=this.checked"><i></i></label>
- <div class=row><button class="btn btn-p" style="flex:1" ${l.length ? '' : 'disabled'} onclick="exportData('zip','save',exList(),EX.photos)">${I('save')}Simpan ke perangkat</button>
- <button class="btn btn-o" style="flex:1" ${l.length ? '' : 'disabled'} onclick="exportData('zip','share',exList(),EX.photos)">${I('send')}Bagikan…</button></div>
- <p class=lead style="margin-top:10px">${l.length} objek · ${np} foto akan diekspor. <b>Simpan ke perangkat</b> membuka dialog “Simpan sebagai” Android agar Anda memilih folder; <b>Bagikan</b> membuka menu aplikasi (WhatsApp, Drive, dll). Elevasi, akurasi GPS, dan simbol ikut tercatat sebagai atribut.</p>`, '', true)
+ <h4>Format spasial</h4><div class=chips>${[['geojson','GeoJSON'],['shp','Shapefile (SHP)'],['kmz','KMZ']].map(([k,t]) => `<button class="${EX.fmt == k ? 'on' : ''}" onclick="EX.fmt='${k}';pExport()">${t}</button>`).join('')}</div>
+ <div class=info>ZIP berisi satu format spasial yang dipilih dan folder attachments/foto/. Setiap fitur menyimpan path relatif foto; satu objek dapat memiliki beberapa foto. Untuk SHP, path foto disimpan sebagai teks karena keterbatasan atribut DBF.</div>
+ <label class=sw><span>Sertakan foto<small>Foto dikemas di folder attachments/foto; KMZ juga menyertakan foto di dalam arsipnya</small></span><input type=checkbox ${EX.photos ? 'checked' : ''} onchange="EX.photos=this.checked"><i></i></label>
+ <div class=row><button class="btn btn-p" style="flex:1" ${l.length ? '' : 'disabled'} onclick="exportData(EX.fmt,'save',exList(),EX.photos)">${I('save')}Simpan ke perangkat</button>
+ <button class="btn btn-o" style="flex:1" ${l.length ? '' : 'disabled'} onclick="exportData(EX.fmt,'share',exList(),EX.photos)">${I('send')}Bagikan…</button></div>
+ <p class=lead style="margin-top:10px">${l.length} objek · ${np} foto akan diekspor sebagai ${EX.fmt.toUpperCase()}. <b>Simpan ke perangkat</b> membuka dialog “Simpan sebagai” Android agar Anda memilih folder; <b>Bagikan</b> membuka menu aplikasi (WhatsApp, Drive, dll). Elevasi, akurasi GPS, dan simbol ikut tercatat sebagai atribut.</p>`, '', true)
 };
 
 // ---------- panel: pengaturan ----------

@@ -72,7 +72,8 @@ function draw() {
     else {
       const g = llParts(f.coords, f.brk), dash = (LNSTY[sy.ln] || LNSTY.solid)[1], st = { color: sy.c, weight: 4, dashArray: dash, lineCap: dash && sy.ln == 'dot' ? 'round' : undefined };
       (f.type == 'LineString' ? L.polyline : L.polygon)(g, { color: '#fff', weight: 8, opacity: .9, fill: false, interactive: false }).addTo(FL);
-      l = f.type == 'LineString' ? L.polyline(g, st) : L.polygon(g, { ...st, fillOpacity: .2 })
+      l = f.type == 'LineString' ? L.polyline(g, st) : L.polygon(g, { ...st, fillOpacity: .2 });
+      if (f.props.name) l.bindTooltip(esc(f.props.name), { permanent: true, direction: 'center', className: 'lt', opacity: 1 })
     }
     l.on('click', e => { L.DomEvent.stopPropagation(e); edit(f.id) }); l.addTo(FL)
   }); updFab()
@@ -449,19 +450,42 @@ async function addPhotoAssets(zip, list, prefix) {
 }
 async function exportData(fmt, how, list, photos) {
   if (!list.length) return toast('Tidak ada data yang dipilih untuk diekspor');
+  if (!['geojson', 'shp', 'kmz'].includes(fmt)) return toast('Format ekspor tidak dikenal');
   const base = 'patroli_' + stamp();
   try {
-    const zip = new JSZip(), outerPaths = photoPathMap(list, 'attachments/foto'), kmzPaths = photoPathMap(list, 'files/foto');
+    const zip = new JSZip(), outerPaths = photoPathMap(list, 'attachments/foto');
     const geo = { ...gj(list, { photos, z: true, paths: outerPaths }), generator: 'TAPAK - Spectra CC (Spectra Citra Cendekia)' };
     const kml = makeKml(list, photos, outerPaths, 'attachments/foto');
-    const kmz = new JSZip();
-    kmz.file('doc.kml', makeKml(list, photos, kmzPaths, 'files/foto'));
-    if (photos) await addPhotoAssets(kmz, list, 'files/foto');
-    zip.file(`${base}.geojson`, JSON.stringify(geo, null, 2));
-    zip.file(`${base}.kml`, kml);
-    zip.file(`${base}.kmz`, await kmz.generateAsync({ type: 'uint8array', compression: 'DEFLATE' }));
+    if (fmt === 'geojson') {
+      zip.file(`${base}.geojson`, JSON.stringify(geo, null, 2));
+    } else if (fmt === 'kmz') {
+      const kmz = new JSZip(), kmzPaths = photoPathMap(list, 'files/foto');
+      kmz.file('doc.kml', makeKml(list, photos, kmzPaths, 'files/foto'));
+      if (photos) await addPhotoAssets(kmz, list, 'files/foto');
+      zip.file(`${base}.kmz`, await kmz.generateAsync({ type: 'uint8array', compression: 'DEFLATE' }));
+    } else {
+      if (!window.shpwrite || typeof shpwrite.zip !== 'function') throw new Error('Modul ekspor SHP tidak tersedia');
+      // DBF tidak mendukung array; foto_paths disimpan sebagai daftar path relatif dipisahkan titik koma.
+      const shpGeo = JSON.parse(JSON.stringify(geo));
+      shpGeo.features.forEach(ft => {
+        const pp = ft.properties.foto_paths || [];
+        ft.properties.foto_paths = pp.join(';');
+        ft.properties.foto = pp.join(';');
+        ft.properties.jml_foto = pp.length;
+        pp.forEach((path, i) => { ft.properties['foto_' + (i + 1)] = path });
+      });
+      const shpBlob = await shpwrite.zip(shpGeo, { folder: base, types: { point: 'titik', polygon: 'area', line: 'jalur' } });
+      const shpZip = await JSZip.loadAsync(shpBlob);
+      const rootFiles = Object.values(shpZip.files).filter(x => !x.dir);
+      if (!rootFiles.length) throw new Error('Hasil SHP kosong');
+      for (const entry of rootFiles) {
+        const rel = entry.name.split('/').pop();
+        if (rel) zip.file(`${base}_shp/${rel}`, await entry.async('uint8array'));
+      }
+      // Sertakan metadata atribut lengkap dalam GeoJSON pendamping? Tidak: hanya format yang dipilih.
+    }
     if (photos) await addPhotoAssets(zip, list, 'attachments/foto');
-    zip.file('README.txt', `TAPAK — Paket ekspor data spasial\n\nIsi paket:\n- ${base}.geojson: fitur spasial beserta atribut foto_paths (array path relatif)\n- ${base}.kml: data untuk aplikasi yang mendukung KML; foto dirujuk relatif ke attachments/foto/\n- ${base}.kmz: KML dan foto dikemas bersama agar dapat dibuka mandiri\n- attachments/foto/: seluruh foto lampiran\n\nSetiap fitur memiliki atribut foto_paths (array), foto (daftar path dipisahkan titik koma), dan jumlah_foto. Path foto relatif terhadap lokasi file spasial.\n`);
+    zip.file('README.txt', `TAPAK — Paket ekspor data spasial\n\nFormat spasial: ${fmt.toUpperCase()}\nIsi paket: satu format spasial terpilih dan folder attachments/foto/.\nSetiap fitur memiliki atribut foto_paths (daftar path relatif) dan jumlah_foto. Untuk SHP, foto_paths disimpan sebagai teks dengan pemisah titik koma karena keterbatasan DBF.\nPath relatif foto mengarah ke attachments/foto/ pada ZIP ini. Pada KMZ, foto juga ditanam di dalam KMZ agar dapat dibuka mandiri.\n`);
     const blob = await zip.generateAsync({ type: 'blob', compression: 'DEFLATE', compressionOptions: { level: 6 } });
     return await out(base + '.zip', blob, how);
   } catch (e) { console.error(e); toast('Ekspor gagal: ' + (e.message || e)) }
