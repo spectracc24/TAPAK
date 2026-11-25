@@ -358,3 +358,11 @@ nav button.paused{color:#C98A00}
 #splash .ver{font:600 11.5px var(--bf);letter-spacing:.08em;opacity:.7;margin-top:2px}
 .rpcap{min-height:78px;margin:8px 0;display:flex;justify-content:center}
 #sheet textarea#rpd{resize:vertical}
+
+/* Coming soon: fitur jelas belum tersedia dan benar-benar nonaktif */
+.soon-tag{display:inline-flex;align-items:center;justify-content:center;border:1px solid var(--muted);border-radius:999px;padding:4px 9px;font:800 10px/1.2 var(--bf);letter-spacing:.08em;color:var(--muted);background:var(--surface);}
+.soon-tile,.soon-btn{cursor:not-allowed!important;opacity:.62!important;filter:saturate(.35);border-style:dashed!important;}
+.soon-tile{align-items:flex-start;gap:8px;}
+.soon-btn{display:flex;align-items:center;gap:10px;justify-content:center;flex-wrap:wrap;}
+.soon-btn .soon-tag{flex-basis:100%;}
+.soon-tile:active,.soon-btn:active{background:var(--card)!important;transform:none!important;}

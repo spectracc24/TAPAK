@@ -5,10 +5,14 @@ const CFG = window.TAPAK_CFG || {};
 
 // ---------- buka website (dengan pemberitahuan alihan) ----------
 window.openExt = async (url, nama) => {
-  const host = url.replace(/^https?:\/\//, '').split('/')[0];
-  if (!await dlg({ title: 'Buka ' + (nama || 'website') + '?', body: `Anda akan diarahkan ke browser untuk membuka <b>${esc(host)}</b>. TAPAK tetap terbuka di latar.`, ok: 'Buka', cancel: 'Batal' })) return;
+  if (typeof url !== 'string' || !/^https?:\/\//i.test(url)) return toast('Alamat website tidak valid');
+  const host = url.replace(/^https?:\/\//i, '').split('/')[0];
+  // Card konfirmasi hanya dibuat ketika fungsi dipanggil (mis. dari tombol Dukung Pengembang).
+  const ok = await dlg({ title: 'Dukung pengembang', body: `Terima kasih atas dukungan Anda untuk TAPAK. Anda akan diarahkan ke website <b>${esc(host)}</b>. TAPAK tetap terbuka di latar.`, ok: 'Lanjut ke website', cancel: 'Batal' });
+  if (!ok) return;
   if (native) location.href = url; else window.open(url, '_blank', 'noopener,noreferrer');
 };
+window.supportDev = () => window.openExt(CFG.site, 'website Spectra CC');
 
 // ---------- persetujuan syarat & kebijakan privasi (sekali; muncul lagi hanya bila versinya naik) ----------
 const CONSENT_V = 1;

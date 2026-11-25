@@ -152,7 +152,7 @@ window.pLayers = keep => {
  <button class="btn btn-o sm" onclick="pListNew()">${I('list')}Kelola…</button></div></div>
  <h4>Peta PDF (tanpa internet)</h4><button class="btn btn-p wide" onclick="$('#pdfin').click()">${I('plus')}Impor peta PDF</button>
  ${PM.length ? PM.map(pmCard).join('') : '<p class=lead style="margin-top:12px">Belum ada peta PDF. Gunakan GeoPDF hasil ekspor ArcMap atau QGIS.</p>'}
- <h4>Cetak &amp; laporan</h4><button class="btn btn-o wide" disabled>${I('layout')}Ekspor peta berlayout (PDF/PNG/JPEG) · Coming soon</button>`, '', keep === true)
+ <h4>Cetak &amp; laporan</h4><button class="btn btn-o wide soon-btn" type=button disabled aria-disabled=true>${I('layout')}<span>Ekspor peta berlayout</span><span class="soon-tag">COMING SOON</span></button>`, '', keep === true)
 };
 let nudgeStep = 5;
 window.pNudge = (id, keep) => {
@@ -337,7 +337,7 @@ window.resetS = async () => {
 };
 
 // ---------- menu lainnya, bantuan, tentang ----------
-window.pMenu = () => sheet(`<h3>Lainnya</h3><div class=grid>${T('sliders', 'Pengaturan', 'pSet()')}${T('export', 'Simpan &amp; bagikan data', 'pExport()')}<button class="tile" disabled>${ICO('layout')}<span>Ekspor peta (PDF/PNG/JPEG) · Coming soon</span></button>${T('help', 'Cara pakai', 'pHelp()')}${T('mail', 'Laporkan bug / penyalahgunaan', 'pReport()')}${T('info', 'Tentang TAPAK', 'pAbout()')}</div>
+window.pMenu = () => sheet(`<h3>Lainnya</h3><div class=grid>${T('sliders', 'Pengaturan', 'pSet()')}${T('export', 'Simpan &amp; bagikan data', 'pExport()')}<button class="tile soon-tile" type=button disabled aria-disabled=true>${ICO('layout')}<span>Ekspor peta (PDF/PNG/JPEG)</span><span class="soon-tag">COMING SOON · BELUM AKTIF</span></button>${T('help', 'Cara pakai', 'pHelp()')}${T('mail', 'Laporkan bug / penyalahgunaan', 'pReport()')}${T('info', 'Tentang TAPAK', 'pAbout()')}</div>
  <p class=foot>TAPAK v${esc(window.APP_VER || '')} · dikembangkan oleh Spectra CC</p>`);
 window.pHelp = () => sheet(`<h3>Cara pakai</h3>
  <h4>Peta tanpa sinyal</h4><p>Peta → Impor peta PDF → pilih berkas GeoPDF dari HP. Tombol <b>Sembunyikan/Tampilkan</b> mengatur peta PDF di layar; lapisan yang disembunyikan diberi label <b>Tersembunyi</b> dan tombol lapisan di peta bertitik.</p>
