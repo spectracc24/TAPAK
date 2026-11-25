@@ -15,7 +15,7 @@ const kvg = k => kv.get(k).catch(e => { console.error('baca gagal', k, e) });
 const DEF = {
   coord: 'dd', unit: 'metric', theme: 'auto',
   showEle: true, showSpd: false, showGain: false,      // info tambahan di layar
-  lbl: 'show', symSize: 'm', autoJenis: false,          // tampilan data lapangan
+  lbl: 'show', lblSize: 12, symSize: 'm', autoJenis: false,          // tampilan data lapangan
   trkInt: '2', trkCustom: 10, trkMinDist: true,         // rekam jejak: '2' | '30' | 'all' | 'custom'
   maxAcc: 32, accAct: 'warn',                         // batas akurasi horizontal (m, 0 = tanpa batas); warn | block | off
   eleSrc: 'geoid', eleOff: 0
@@ -77,7 +77,7 @@ function draw() {
     l.on('click', e => { L.DomEvent.stopPropagation(e); edit(f.id) }); l.addTo(FL)
   }); updFab()
 }
-function applyLbl() { const off = S.lbl == 'hide' || (S.lbl == 'auto' && map.getZoom() < 15); $('#map').classList.toggle('lbl-off', off) }
+function applyLbl() { document.documentElement.style.setProperty('--lt-fs', (+S.lblSize || 12) + 'px'); const off = S.lbl == 'hide' || (S.lbl == 'auto' && map.getZoom() < 15); $('#map').classList.toggle('lbl-off', off) }
 map.on('zoomend', applyLbl);
 // penanda pada tombol lapisan bila ada data/peta PDF yang disembunyikan
 function updFab() { const b = $('#fab-layers'); if (b) b.classList.toggle('dot', HID.pm.size > 0 || F.some(f => !isVis(f))) }
@@ -194,7 +194,7 @@ function bgStart() {
   if (bgP || paused) return;
   let r;
   try {
-    r = B.addWatcher({ backgroundTitle: 'TAPAK sedang merekam jejak', backgroundMessage: 'Ketuk untuk membuka TAPAK · Spectra CC', requestPermissions: false, stale: false, distanceFilter: 0 }, (l, e) => {
+    r = B.addWatcher({ backgroundTitle: 'TAPAK · Sedang tracking', backgroundMessage: 'Jejak sedang direkam. Ketuk untuk membuka TAPAK.', requestPermissions: false, stale: false, distanceFilter: 0 }, (l, e) => {
       if (e) { if (e.code === 'NOT_AUTHORIZED') { toast('Izin lokasi diperlukan agar rekaman tetap jalan di latar belakang'); bgStop() } return }
       if (l) applyFix(l.latitude, l.longitude, l.accuracy, l.bearing, l.speed, l.altitude, l.altitudeAccuracy, l.time)
     })
@@ -204,9 +204,16 @@ function bgStart() {
 async function bgStop() { const B = BG(), p = bgP; bgP = null; if (!B || !p) return; try { const id = await p; if (id != null) await B.removeWatcher({ id }) } catch (e) { console.error('bg stop', e) } }
 // notifikasi "dijeda" (selama jeda tidak ada layanan latar depan, jadi penanda ini yang mengingatkan pengguna)
 async function pauseNote(on) {
-  const L_ = LN(); if (!L_) return; try {
-    if (on) await L_.schedule({ notifications: [{ id: 7001, title: 'TAPAK · rekaman DIJEDA', body: 'Ketuk untuk membuka TAPAK lalu lanjutkan atau hentikan rekaman.', ongoing: true, autoCancel: false, smallIcon: 'ic_stat_tapak' }] });
-    else await L_.cancel({ notifications: [{ id: 7001 }] })
+  const L_ = LN(); if (!L_) return;
+  try {
+    if (on) {
+      // kanal sendiri (tanpa suara/getar) + ikon oranye agar jelas beda dari notifikasi "Sedang tracking"
+      try { await L_.createChannel({ id: 'tapak_track', name: 'Status rekaman TAPAK', description: 'Penanda saat rekaman jejak dijeda', importance: 3, visibility: 1, vibration: false, lights: false }) } catch (e) { }
+      await L_.schedule({ notifications: [{ id: 7001, channelId: 'tapak_track', title: 'TAPAK · Track dijeda', body: 'Rekaman dijeda. Ketuk untuk membuka TAPAK, lalu lanjutkan atau hentikan.', ongoing: true, autoCancel: false, smallIcon: 'ic_stat_tapak', iconColor: '#E8871E' }] })
+    } else {
+      await L_.cancel({ notifications: [{ id: 7001 }] }).catch(() => { });
+      try { await L_.removeDeliveredNotifications({ notifications: [{ id: 7001, title: '', body: '' }] }) } catch (e) { }
+    }
   } catch (e) { console.warn('notifikasi jeda', e) }
 }
 // Android 13+: tanpa izin notifikasi, penanda "sedang merekam" tidak tampil di bilah status
@@ -236,10 +243,10 @@ function startTrack(st) {
   tline = L.polyline(g, { color: paused ? '#C98A00' : '#367A55', weight: 5 }).addTo(map); saveTrk(true);
   if (paused) pauseNote(true); else bgStart()
 }
-function pauseTrack() { if (!tracking || paused) return; paused = true; pauseAt = Date.now(); tline.setStyle({ color: '#C98A00' }); bgStop(); pauseNote(true); saveTrk(true); if (window.trackUI) trackUI(); toast('Rekaman dijeda. GPS dimatikan sementara.') }
+function pauseTrack() { if (!tracking || paused) return; paused = true; pauseAt = Date.now(); tline.setStyle({ color: '#C98A00' }); pauseNote(true).then(bgStop); saveTrk(true); if (window.trackUI) trackUI(); toast('Rekaman dijeda. GPS dimatikan sementara.') }
 function resumeTrack() {
   if (!tracking || !paused) return; pausedMs += Date.now() - pauseAt; paused = false; pauseAt = 0; needBrk = tcoords.length > 0; lastRecT = 0;
-  tline.setStyle({ color: '#367A55' }); pauseNote(false); bgStart(); saveTrk(true); if (window.trackUI) trackUI(); toast('Rekaman dilanjutkan')
+  tline.setStyle({ color: '#367A55' }); bgStart(); pauseNote(false); saveTrk(true); if (window.trackUI) trackUI(); toast('Rekaman dilanjutkan')
 }
 const trkElapsed = () => (paused ? pauseAt : Date.now()) - t0 - pausedMs;
 async function endTrack() {
@@ -449,5 +456,5 @@ async function exportData(fmt, how, list, photos) {
   S = { ...DEF, base: 'osm', ...(await kvg('S') || {}) }; F = await kvg('F') || [];
   const h = await kvg('H'); if (h) { const ids = new Set(F.map(f => f.id)); HID.f = new Set((h.f || []).filter(i => ids.has(i))); HID.pm = new Set(h.pm || []) }
   const last = await kvg('last'); if (last) { fix = { ...last, t: 0 }; map.setView([last.lat, last.lon], 14); gpsMsg = 'Posisi terakhir diketahui; menunggu GPS…' } PM = await kvg('PM') || []; setBase(S.base); draw(); PM.forEach(showPM); applyLbl(); updFab(); startGPS(); hud();
-  const tk = await kvg('trk'); if (tk && tk.coords && tk.coords.length) { startTrack(tk); if (window.trackUI) trackUI(); toast(tk.paused ? 'Rekaman jejak yang dijeda dipulihkan (' + tk.coords.length + ' titik)' : 'Rekaman jejak sebelumnya dilanjutkan (' + tk.coords.length + ' titik)') }
+  const tk = await kvg('trk'); if (!(tk && tk.coords && tk.coords.length)) pauseNote(false); if (tk && tk.coords && tk.coords.length) { startTrack(tk); if (window.trackUI) trackUI(); toast(tk.paused ? 'Rekaman jejak yang dijeda dipulihkan (' + tk.coords.length + ' titik)' : 'Rekaman jejak sebelumnya dilanjutkan (' + tk.coords.length + ' titik)') }
 })();

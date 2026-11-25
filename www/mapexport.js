@@ -142,49 +142,72 @@
     const cv = (o.createCanvas || ((w, h) => { const c = document.createElement('canvas'); c.width = w; c.height = h; return c }))(Wpx, Hpx);
     const ctx = cv.getContext('2d'); ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high';
     const info = { dpi, Wpx, Hpx, scaleN: 0, tiles: { total: 0, ok: 0, failed: 0, z: null }, labelsSkipped: 0, notes: [] };
-    if (root.document && document.fonts) { try { await Promise.all(['800 20px Manrope', '600 20px Inter', '500 20px Inter', '400 20px Inter'].map(f => document.fonts.load(f))) } catch (e) { } }
+    if (root.document && document.fonts) { try { await Promise.all(['800 20px Manrope', '700 20px Manrope', 'italic 400 20px Inter', '700 20px Inter', '600 20px Inter', '500 20px Inter', '400 20px Inter'].map(f => document.fonts.load(f))) } catch (e) { } }
     stop(); prog(.02, 'Menyiapkan layout');
     ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, Wpx, Hpx); ctx.textBaseline = 'top';
 
     // ----- tata letak halaman (px) -----
-    const x0 = U(7), x1 = Wpx - U(7), cw = x1 - x0, hasGrid = o.grid && o.grid !== 'none';
-    let y = U(7), tLines = [], tSize = 0, dLines = [];
+    // Struktur: bingkai halaman > judul (12 pt) + deskripsi (10 pt) > kanvas peta (grid, utara, skala) > kotak kaki 4 kolom
+    // (info | legenda | analisis | sumber + produksi). Ukuran font dalam pt untuk A4, diskalakan dengan u untuk ukuran lain.
+    const PT = 25.4 / 72, bpt = p => U(p * PT), hasGrid = o.grid && o.grid !== 'none';
+    const x0 = U(5.5), x1 = Wpx - U(5.5), cw = x1 - x0, headTop = U(5.5), dateText = o.dateText || fmtDateId(new Date());
+    let tLines = [], tSize = bpt(12), dLines = [];
     if (o.title && o.title.trim()) {
-      for (let s = 7.4; s >= 4.2; s -= .4) {
-        tSize = U(s); ctx.font = `800 ${tSize}px ${FH}`; tLines = wrapText(ctx, o.title.trim(), cw, 2);
+      for (let s = 12; s >= 8; s -= .5) {
+        tSize = bpt(s); ctx.font = `700 ${tSize}px ${FH}`; tLines = wrapText(ctx, o.title.trim(), cw, 2);
         if (!/…$/.test(tLines[tLines.length - 1] || '') || /…$/.test(o.title.trim())) break;          // muat tanpa dipotong
       }
     }
-    const tH = tLines.length * tSize * 1.18;
-    if (o.desc && o.desc.trim()) {
-      const dSize = U(3.3); ctx.font = `400 ${dSize}px ${FB}`;
-      const maxL = clamp(Math.floor((Hpx * .2 - tH) / (dSize * 1.4)), 1, 5); dLines = wrapText(ctx, o.desc.trim(), cw, maxL);
-    }
-    const dSize = U(3.3), dH = dLines.length * dSize * 1.4;
-    let hb = y; if (tLines.length) hb += tH; if (dLines.length) hb += (tLines.length ? U(1.2) : 0) + dH;
-    const hasHead = tLines.length || dLines.length; if (hasHead) hb += U(2.2); const ruleY = hb; if (hasHead) hb += U(.9) + U(2.2);
+    const tH = tLines.length * tSize * 1.25, dSize = bpt(10), dLh = dSize * 1.35;
+    if (o.desc && o.desc.trim()) { ctx.font = `italic 400 ${dSize}px ${FB}`; dLines = wrapText(ctx, o.desc.trim(), cw, clamp(Math.floor((Hpx * .12 - tH) / dLh), 1, 4)) }
+    const dH = dLines.length * dLh, hasHead = tLines.length || dLines.length;
+    const hb = headTop + tH + dH + (hasHead ? U(2.5) : 0);
 
-    // kaki halaman: baris info + baris logo/disclaimer
-    const logoH = U(6.2), info1 = [];
-    if (o.author && o.author.trim()) info1.push(['DIBUAT OLEH', o.author.trim()]);
-    if (o.dateText) info1.push(['TANGGAL EKSPOR', o.dateText]);
-    let logoW = 0; const logoImgs = {};
-    if (o.logos) {
-      logoImgs.tapak = o.logos.tapak ? await svgToImage(o.logos.tapak) : null; logoImgs.spectra = o.logos.spectra ? await svgToImage(o.logos.spectra) : null;
-      ctx.font = `800 ${U(3.4)}px ${FH}`;
-      logoW = (logoImgs.tapak ? logoH * logoImgs.tapak.width / logoImgs.tapak.height + U(1.6) + ctx.measureText('TAPAK').width + U(4) : 0) + (logoImgs.spectra ? logoH * logoImgs.spectra.width / logoImgs.spectra.height + U(1.6) + ctx.measureText('Spectra CC').width : 0);
-    }
-    const disSize = U(2.15); ctx.font = `400 ${disSize}px ${FB}`;
-    const disW = cw - (logoW ? logoW + U(5) : 0), disLines = o.disclaimer ? wrapText(ctx, o.disclaimer, Math.max(disW, U(40)), 3) : [];
-    const rowH = Math.max(o.logos ? logoH : 0, disLines.length * disSize * 1.38), infoH = U(8.6);
-    const fb = Hpx - U(6.5), footH = infoH + U(2.4) + rowH + U(1.6), fTop = fb - footH;
+    // sistem koordinat (zona UTM ditentukan dari titik tengah data, tidak bergantung ukuran bingkai)
+    const mA = merc(o.bounds.w, o.bounds.s), mB = merc(o.bounds.e, o.bounds.n), cll = unmerc((mA[0] + mB[0]) / 2, (mA[1] + mB[1]) / 2);
+    const crs = o.grid === 'utm' ? `WGS 84 · UTM zona ${utmZone(cll[0])}${cll[1] < 0 ? 'S' : 'N'}` : hasGrid ? 'WGS 84 · koordinat geografis' : 'WGS 84 · Web Mercator';
 
-    // bingkai peta
-    const ring = hasGrid ? U(8) : U(1.6), fx = x0 + ring, fy = hb + ring, fw = cw - 2 * ring, fh = fTop - U(2.2) - fy - ring;
+    // kaki halaman: semua teks 10 pt (A4). Tinggi kaki mengikuti isi; teks yang kepanjangan menambah baris, lalu dipotong dengan "…"
+    const fs = bpt(10), flh = fs * 1.32, fpad = U(1.8), fMaxH = Hpx * .27, fb = Hpx - U(5.5);
+    const fr = Wpx >= Hpx ? [.31, .20, .19, .30] : [.31, .21, .17, .31], colW = fr.map(f => cw * f), colX = [];
+    colW.reduce((a, w, i) => (colX[i] = a, a + w), x0);
+    const inW = i => colW[i] - 2 * fpad, maxLn = Math.max(2, Math.floor((fMaxH - 2 * fpad) / flh));
+    const wrapAll = (arr, w, perItem, budget) => {
+      const out = []; let cut = false;
+      for (let i = 0; i < arr.length; i++) {
+        if (out.length >= budget) { cut = true; break }
+        out.push(...wrapText(ctx, arr[i], w, Math.min(perItem, budget - out.length)));
+      }
+      if (cut && out.length) out[out.length - 1] = fitText(ctx, out[out.length - 1] + '…', w);
+      return out;
+    };
+    ctx.font = `400 ${fs}px ${FB}`;
+    const c1 = []; if (o.author && o.author.trim()) c1.push('Dibuat oleh: ' + o.author.trim()); if (o.loc && o.loc.trim()) c1.push('Lokasi survey: ' + o.loc.trim());
+    c1.push('Tanggal pembuatan: ' + dateText, 'Ukuran kertas: ' + (o.paperLabel || ''), 'Sistem koordinat: ' + crs);
+    const c1L = wrapAll(c1, inW(0), 3, maxLn);
+    const symSz = fs * 1.05, legRow = Math.max(flh, symSz * 1.3), h2 = flh + 3 * legRow;
+    const c3 = o.analysis ? [`Jumlah titik: ${o.analysis.points}`, `Panjang garis: ${o.analysis.length}`, `Luas area: ${o.analysis.area}`] : ['Analisis tidak disajikan'];
+    const c3L = wrapAll(c3, inW(2), 2, maxLn - 1), h3 = flh * (1 + c3L.length);
+    // sel "Diproduksi dengan": satu baris bila muat, jika tidak dua baris (teks, lalu logo)
+    let logoImgs = {}; if (o.logos) { logoImgs.tapak = o.logos.tapak ? await svgToImage(o.logos.tapak) : null; logoImgs.spectra = o.logos.spectra ? await svgToImage(o.logos.spectra) : null }
+    const lgH = fs * 1.9, G = fs * .5, hasLogo = !!(logoImgs.tapak || logoImgs.spectra);
+    ctx.font = `400 ${fs}px ${FB}`; const wProd = ctx.measureText('Diproduksi dengan').width, wBy = ctx.measureText('by').width;
+    ctx.font = `800 ${fs}px ${FH}`; const wTap = ctx.measureText('TAPAK App').width, wSpc = ctx.measureText('Spectra CC').width;
+    const lw1 = logoImgs.tapak ? lgH * logoImgs.tapak.width / logoImgs.tapak.height : 0, lw2 = logoImgs.spectra ? lgH * logoImgs.spectra.width / logoImgs.spectra.height : 0;
+    const wLogos = (lw1 ? lw1 + G + wTap : 0) + (lw1 && lw2 ? G * 2 + wBy + G * 2 : 0) + (lw2 ? lw2 + G + wSpc : 0), oneRow = hasLogo && wProd + G * 2 + wLogos <= inW(3);
+    const prodH = !hasLogo ? flh * 2 + 2 * fpad * .7 : oneRow ? lgH + 2 * fpad * .7 : flh + lgH + fpad * .7 * 2 + G * .5;
+    ctx.font = `400 ${fs}px ${FB}`;
+    const srcText = 'Sumber: Hasil pengukuran/survey' + (o.author && o.author.trim() ? ' ' + o.author.trim() : '') + ', ' + dateText + (o.loc && o.loc.trim() ? ', ' + o.loc.trim() : '');
+    const c4 = [srcText]; if (o.basemapText) c4.push('Sumber basemap: ' + o.basemapText);
+    const c4L = wrapAll(c4, inW(3), 4, Math.max(2, Math.floor((fMaxH - prodH - 2 * fpad) / flh)));
+    const footH = Math.max(c1L.length * flh, h2, h3, 0) + 2 * fpad, footH2 = Math.max(footH, c4L.length * flh + 2 * fpad + prodH), fTop = fb - footH2;
+
+    // kanvas peta (kotak) berisi bingkai peta + cincin label grid
+    const cvTop = hb, cvBot = fTop - U(2.2), ring = hasGrid ? U(8) : U(1.6), fx = x0 + ring, fy = cvTop + ring, fw = cw - 2 * ring, fh = cvBot - cvTop - 2 * ring;
     if (fw < U(40) || fh < U(30)) throw new Error('Ukuran kertas terlalu kecil untuk memuat layout peta');
     const fwMm = fw / pxmm, fhMm = fh / pxmm;
     const vw = computeView(o.bounds, fwMm, fhMm, o.scaleMode, +o.scaleN, o.pad == null ? .05 : o.pad);
-    info.scaleN = vw.N; info.frame = { w: fwMm, h: fhMm };
+    info.scaleN = vw.N; info.frame = { w: fwMm, h: fhMm }; info.footH = footH2 / pxmm;
     const X = xm => fx + fw / 2 + (xm - vw.cx) / vw.mpm * pxmm, Yc = ym => fy + fh / 2 - (ym - vw.cy) / vw.mpm * pxmm;
     const toPx = (lon, lat) => { const m = merc(lon, lat); return [X(m[0]), Yc(m[1])] };
     const half = { x: fwMm / 2 * vw.mpm, y: fhMm / 2 * vw.mpm };
@@ -195,10 +218,9 @@
     // ----- kepala -----
     stop();
     if (hasHead) {
-      let ty = U(7); ctx.fillStyle = NAVY; ctx.font = `800 ${tSize}px ${FH}`;
-      tLines.forEach(l => { ctx.fillText(l, x0, ty); ty += tSize * 1.18 });
-      if (dLines.length) { ty += tLines.length ? U(1.2) : 0; ctx.fillStyle = '#3B4852'; ctx.font = `400 ${dSize}px ${FB}`; dLines.forEach(l => { ctx.fillText(l, x0, ty); ty += dSize * 1.4 }) }
-      [NAVY, TEAL, GREEN].forEach((c, i) => { ctx.fillStyle = c; ctx.fillRect(x0 + cw / 3 * i, ruleY, cw / 3 + 1, U(.9)) });
+      let ty = headTop; ctx.fillStyle = NAVY; ctx.font = `700 ${tSize}px ${FH}`;
+      tLines.forEach(l => { ctx.fillText(l, x0, ty); ty += tSize * 1.25 });
+      if (dLines.length) { ctx.fillStyle = '#3B4852'; ctx.font = `italic 400 ${dSize}px ${FB}`; dLines.forEach(l => { ctx.fillText(l, x0, ty); ty += dLh }) }
     }
 
     // ----- isi peta (dipotong ke bingkai) -----
@@ -283,35 +305,8 @@
       const path = sp[f.shape] || sp.circle; ctx.strokeStyle = 'rgba(23,50,77,.7)'; ctx.lineWidth = 3.6; ctx.stroke(path); ctx.strokeStyle = '#fff'; ctx.lineWidth = 2.2; ctx.stroke(path); ctx.fillStyle = f.color; ctx.fill(path); ctx.restore();
       placed.push([px - symPx / 2, py - symPx / 2, symPx, symPx]); pointPx.push([f, px, py]);
     }
-    // label (hindari tumpang tindih; yang tidak muat dihitung dan dilaporkan)
-    if (o.showLabels) {
-      const ls = U(2.7), pad = U(.5); ctx.font = `600 ${ls}px ${FB}`; ctx.textBaseline = 'middle';
-      const lab = f => (f.label || '').trim(), hit = (a, b) => a[0] < b[0] + b[2] - .5 && a[0] + a[2] > b[0] + .5 && a[1] < b[1] + b[3] - .5 && a[1] + a[3] > b[1] + .5;   // toleransi 0,5 px: sentuhan tepi bukan tumpang tindih
-      const inside = r => r[0] >= fx && r[1] >= fy && r[0] + r[2] <= fx + fw && r[1] + r[3] <= fy + fh;
-      const todo = [];
-      for (const [f, px, py] of pointPx) if (lab(f)) todo.push({ t: fitText(ctx, lab(f), U(60)), c: [[px + symPx / 2 + pad, py, 'l'], [px - symPx / 2 - pad, py, 'r'], [px, py - symPx / 2 - ls * .8, 'c'], [px, py + symPx / 2 + ls * .8, 'c']] });
-      for (const f of feats) if (f.type !== 'Point' && lab(f)) {
-        let a;
-        if (f.type === 'Polygon') { const q = pxPath(f.coords); let sx = 0, sy = 0; q.forEach(p => { sx += p[0]; sy += p[1] }); a = [sx / q.length, sy / q.length] }
-        else { const q = (f.parts && f.parts.length ? f.parts.reduce((m, p) => p.length > m.length ? p : m, f.parts[0]) : f.coords), pp = pxPath(q), seg = []; let tot = 0; for (let i = 1; i < pp.length; i++) { const d = Math.hypot(pp[i][0] - pp[i - 1][0], pp[i][1] - pp[i - 1][1]); seg.push(d); tot += d } let acc = 0, i = 0; while (i < seg.length - 1 && acc + seg[i] < tot / 2) { acc += seg[i]; i++ } const t = seg[i] ? (tot / 2 - acc) / seg[i] : 0; a = pp.length > 1 ? [pp[i][0] + (pp[i + 1][0] - pp[i][0]) * t, pp[i][1] + (pp[i + 1][1] - pp[i][1]) * t] : pp[0] }
-        todo.push({ t: fitText(ctx, lab(f), U(60)), c: [[a[0], a[1] - ls * .9, 'c'], [a[0], a[1] + ls * .9, 'c'], [a[0], a[1], 'c']] });
-      }
-      ctx.lineJoin = 'round';
-      for (const L of todo) {
-        const w = ctx.measureText(L.t).width, h = ls * 1.25; let ok = false;
-        for (const [cx, cy, al] of L.c) {
-          const rx = al === 'l' ? cx : al === 'r' ? cx - w : cx - w / 2, r = [rx - pad, cy - h / 2, w + 2 * pad, h];
-          if (!inside(r) || placed.some(p => hit(r, p))) continue;
-          ctx.textAlign = al === 'c' ? 'center' : al === 'l' ? 'left' : 'right'; ctx.strokeStyle = 'rgba(255,255,255,.95)'; ctx.lineWidth = U(.8); ctx.strokeText(L.t, cx, cy); ctx.fillStyle = NAVY; ctx.fillText(L.t, cx, cy);
-          placed.push(r); ok = true; break;
-        }
-        if (!ok) info.labelsSkipped++;
-      }
-      ctx.textAlign = 'left'; ctx.textBaseline = 'top';
-    }
-
     // arah utara & skala (kartu putih di dalam bingkai)
-    const card = (x, y, w, h) => { rrect(ctx, x, y, w, h, U(1.2)); ctx.fillStyle = 'rgba(255,255,255,.9)'; ctx.fill(); ctx.strokeStyle = 'rgba(23,50,77,.35)'; ctx.lineWidth = Math.max(1, U(.2)); ctx.stroke() };
+    const card = (x, y, w, h) => { placed.push([x, y, w, h]); rrect(ctx, x, y, w, h, U(1.2)); ctx.fillStyle = 'rgba(255,255,255,.9)'; ctx.fill(); ctx.strokeStyle = 'rgba(23,50,77,.35)'; ctx.lineWidth = Math.max(1, U(.2)); ctx.stroke() };
     if (o.north !== false) {
       const w = U(11), h = U(15.5), x = fx + fw - w - U(2.5), yy = fy + U(2.5), cx = x + w / 2; card(x, yy, w, h);
       ctx.fillStyle = NAVY; ctx.font = `800 ${U(4)}px ${FH}`; ctx.textAlign = 'center'; ctx.fillText('U', cx, yy + U(1.2)); ctx.textAlign = 'left';
@@ -321,7 +316,7 @@
       ctx.beginPath(); ctx.moveTo(cx, tip); ctx.lineTo(cx - hw, base); ctx.lineTo(cx, notch); ctx.lineTo(cx + hw, base); ctx.closePath(); ctx.stroke();
     }
     if (o.scalebar !== false) {
-      const gm = vw.N / 1000, target = 50 * u * gm, mag = Math.pow(10, Math.floor(Math.log10(target)));        // gm = meter tanah per mm kertas
+      const gm = vw.N / 1000, target = Math.min(50 * u, fwMm * .3) * gm, mag = Math.pow(10, Math.floor(Math.log10(target)));        // gm = meter tanah per mm kertas
       const nice = [5, 2, 1].map(m => m * mag).find(v => v <= target) || mag, barMm = nice / gm, barPx = P(barMm);
       const nseg = nice / mag === 5 ? 5 : 4, lab = v => v >= 1000 ? +(v / 1000).toFixed(2) + ' km' : +v.toFixed(1) + ' m';
       const text = `Skala 1:${fmtInt(vw.N)}`; ctx.font = `700 ${U(2.8)}px ${FB}`; const tw = ctx.measureText(text).width;
@@ -334,12 +329,41 @@
       const marks = nseg === 4 ? [0, 2, 4] : [0, 5]; marks.forEach(i => ctx.fillText(i === 0 ? '0' : lab(nice * i / nseg), bx + sw * i, by + bh + U(.7))); ctx.textAlign = 'left';
       info.scaleBar = { meters: nice, mm: barMm };
     }
+
+    // label: ukuran font dari o.lblPt (pt untuk A4, diskalakan u). Teks panjang dibungkus (maks 3 baris) lalu dipotong "…";
+    // posisi dicoba beberapa arah, menghindari simbol, kartu utara/skala, dan label lain. Yang tak muat dihitung & dilaporkan.
+    if (o.showLabels) {
+      const ls = U(clamp(+o.lblPt || 8, 4, 24) * PT), pad = U(.7), lh = ls * 1.2, maxW = U(36); ctx.font = `600 ${ls}px ${FB}`; ctx.textBaseline = 'middle';
+      const lab = f => (f.label || '').trim(), hit = (a, b) => a[0] < b[0] + b[2] - .5 && a[0] + a[2] > b[0] + .5 && a[1] < b[1] + b[3] - .5 && a[1] + a[3] > b[1] + .5;   // toleransi 0,5 px: sentuhan tepi bukan tumpang tindih
+      const inside = r => r[0] >= fx && r[1] >= fy && r[0] + r[2] <= fx + fw && r[1] + r[3] <= fy + fh;
+      const todo = [], mk = (txt, c) => { const lines = wrapText(ctx, txt, maxW, 3); return { lines, w: Math.max(...lines.map(l => ctx.measureText(l).width)), c } };
+      for (const [f, px, py] of pointPx) if (lab(f)) { const L = mk(lab(f), null), h = L.lines.length * lh, hs = symPx / 2 + pad; L.c = [[px + hs, py, 'l'], [px - hs, py, 'r'], [px, py - hs - h / 2, 'c'], [px, py + hs + h / 2, 'c'], [px + hs, py - h / 2 - hs / 2, 'l'], [px + hs, py + h / 2 + hs / 2, 'l']]; todo.push(L) }
+      for (const f of feats) if (f.type !== 'Point' && lab(f)) {
+        let a;
+        if (f.type === 'Polygon') { const q = pxPath(f.coords); let sx = 0, sy = 0; q.forEach(p => { sx += p[0]; sy += p[1] }); a = [sx / q.length, sy / q.length] }
+        else { const q = (f.parts && f.parts.length ? f.parts.reduce((m, p) => p.length > m.length ? p : m, f.parts[0]) : f.coords), pp = pxPath(q), seg = []; let tot = 0; for (let i = 1; i < pp.length; i++) { const d = Math.hypot(pp[i][0] - pp[i - 1][0], pp[i][1] - pp[i - 1][1]); seg.push(d); tot += d } let acc = 0, i = 0; while (i < seg.length - 1 && acc + seg[i] < tot / 2) { acc += seg[i]; i++ } const t = seg[i] ? (tot / 2 - acc) / seg[i] : 0; a = pp.length > 1 ? [pp[i][0] + (pp[i + 1][0] - pp[i][0]) * t, pp[i][1] + (pp[i + 1][1] - pp[i][1]) * t] : pp[0] }
+        const L = mk(lab(f), null), h = L.lines.length * lh; L.c = [[a[0], a[1] - h * .8, 'c'], [a[0], a[1] + h * .8, 'c'], [a[0], a[1], 'c'], [a[0] + L.w * .6, a[1] - h, 'c'], [a[0] - L.w * .6, a[1] + h, 'c']]; todo.push(L)
+      }
+      ctx.lineJoin = 'round';
+      for (const L of todo) {
+        const h = L.lines.length * lh; let ok = false;
+        for (const [cx, cy, al] of L.c) {
+          const rx = al === 'l' ? cx : al === 'r' ? cx - L.w : cx - L.w / 2, r = [rx - pad, cy - h / 2, L.w + 2 * pad, h];
+          if (!inside(r) || placed.some(p => hit(r, p))) continue;
+          ctx.textAlign = al === 'c' ? 'center' : al === 'l' ? 'left' : 'right'; ctx.lineWidth = U(.8); ctx.strokeStyle = 'rgba(255,255,255,.95)';
+          L.lines.forEach((t, k) => { const yy = cy - h / 2 + lh * (k + .5); ctx.strokeText(t, cx, yy); ctx.fillStyle = NAVY; ctx.fillText(t, cx, yy) });
+          placed.push(r); ok = true; break;
+        }
+        if (!ok) info.labelsSkipped++;
+      }
+      ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+    }
+
     ctx.restore();
 
     // ----- bingkai & label grid (di luar bingkai) -----
-    ctx.strokeStyle = NAVY; ctx.lineWidth = Math.max(1.2, U(.45)); ctx.strokeRect(fx, fy, fw, fh);
+    ctx.strokeStyle = NAVY; ctx.lineWidth = Math.max(1.2, U(.35)); ctx.strokeRect(x0, cvTop, cw, cvBot - cvTop); ctx.lineWidth = Math.max(1, U(.3)); ctx.strokeRect(fx, fy, fw, fh);
     if (hasGrid) {
-      ctx.lineWidth = Math.max(1, U(.18)); ctx.strokeRect(fx - ring + U(.8), fy - ring + U(.8), fw + 2 * ring - U(1.6), fh + 2 * ring - U(1.6));
       const gs = U(2.5); ctx.font = `500 ${gs}px ${FB}`; ctx.fillStyle = NAVY; ctx.strokeStyle = NAVY; ctx.lineWidth = Math.max(1, U(.2)); ctx.textBaseline = 'middle'; ctx.textAlign = 'center';
       const tk = U(1.2), lastEnd = { t: -1e9, b: -1e9, l: -1e9, r: -1e9 };
       glab.sort((a, b) => a.p - b.p);
@@ -357,28 +381,58 @@
       ctx.textAlign = 'left'; ctx.textBaseline = 'top';
     }
 
-    // ----- kaki halaman -----
+    // ----- kaki halaman (kotak 4 kolom) -----
     stop();
-    const crs = o.grid === 'utm' && info.utm ? `WGS 84 · UTM zona ${info.utm.zone}${info.utm.south ? 'S' : 'N'}` : hasGrid ? 'WGS 84 · koordinat geografis' : 'WGS 84 · Web Mercator';
-    info1.push(['SKALA' + (o.paperLabel ? ' (KERTAS ' + o.paperLabel.toUpperCase() + ')' : ''), `1:${fmtInt(vw.N)}`]); info1.push(['SISTEM KOORDINAT', crs]);
-    ctx.fillStyle = '#C7D5DD'; ctx.fillRect(x0, fTop, cw, Math.max(1, U(.25)));
-    const colW = cw / info1.length;
-    info1.forEach(([cap, val], i) => {
-      const cx = x0 + colW * i + (i ? U(2) : 0), mw = colW - U(3);
-      ctx.fillStyle = MUTED; ctx.font = `600 ${U(1.9)}px ${FB}`; ctx.fillText(fitText(ctx, cap, mw), cx, fTop + U(1.8));
-      ctx.fillStyle = NAVY; ctx.font = `600 ${U(3)}px ${FB}`; ctx.fillText(fitText(ctx, val, mw), cx, fTop + U(1.8) + U(3.3));
-    });
-    const ry = fTop + infoH + U(1.2); let lx = x0;
-    if (o.logos) {
-      const drawLogo = (im, text) => { if (!im) return; const lh = logoH, lw2 = lh * im.width / im.height; ctx.drawImage(im, lx, ry, lw2, lh); lx += lw2 + U(1.6); ctx.fillStyle = NAVY; ctx.font = `800 ${U(3.4)}px ${FH}`; ctx.textBaseline = 'middle'; ctx.fillText(text, lx, ry + lh / 2); lx += ctx.measureText(text).width; ctx.textBaseline = 'top' };
-      drawLogo(logoImgs.tapak, 'TAPAK'); if (logoImgs.tapak && logoImgs.spectra) lx += U(4); drawLogo(logoImgs.spectra, 'Spectra CC');
+    ctx.strokeStyle = NAVY; ctx.lineWidth = Math.max(1.2, U(.35)); ctx.strokeRect(x0, fTop, cw, footH2);
+    for (let i = 1; i < 4; i++) { ctx.beginPath(); ctx.moveTo(colX[i], fTop); ctx.lineTo(colX[i], fTop + footH2); ctx.stroke() }
+    const prodTop = fTop + footH2 - prodH; ctx.beginPath(); ctx.moveTo(colX[3], prodTop); ctx.lineTo(x1, prodTop); ctx.stroke();
+    const INK = '#1F2A33', txt = (lines, i, y0) => lines.forEach((l, k) => ctx.fillText(l, colX[i] + fpad, y0 + k * flh));
+    ctx.fillStyle = INK; ctx.font = `400 ${fs}px ${FB}`; txt(c1L, 0, fTop + fpad);
+    // legenda (tetap 3 baris: titik, jalur, area)
+    {
+      const lx = colX[1] + fpad, lAv = inW(1); ctx.font = `700 ${fs}px ${FB}`; ctx.fillStyle = INK; ctx.fillText('Legenda', lx, fTop + fpad);
+      ctx.font = `400 ${fs}px ${FB}`; const lw = Math.max(...['Titik', 'Jalur', 'Area'].map(t => ctx.measureText(t).width)), sx = lx + lw + fs * .8, av = lAv - lw - fs * .8, lg = o.legend || {};
+      const pts = (lg.points && lg.points.length ? lg.points : [{ shape: 'circle', color: TEAL }]), spP = new Path2D(), sp2 = {}; for (const k in SHAPE_D) sp2[k] = new Path2D(SHAPE_D[k]);
+      ['Titik', 'Jalur', 'Area'].forEach((name, r) => {
+        const cy = fTop + fpad + flh + legRow * r + legRow / 2; ctx.fillStyle = INK; ctx.font = `400 ${fs}px ${FB}`; ctx.textBaseline = 'middle'; ctx.fillText(name, lx, cy);
+        if (r === 0) {                                  // semua bentuk simbol titik yang dipakai, berjajar
+          const step = symSz * 1.35, cap = Math.max(1, Math.floor(av / step)), show = pts.length > cap ? Math.max(1, cap - 1) : pts.length;
+          for (let j = 0; j < show; j++) {
+            const k = symSz / 24; ctx.save(); ctx.translate(sx + symSz / 2 + j * step, cy); ctx.scale(k, k); ctx.translate(-12, -12); ctx.lineJoin = 'round';
+            const path = sp2[pts[j].shape] || sp2.circle; ctx.strokeStyle = 'rgba(23,50,77,.7)'; ctx.lineWidth = 3.6; ctx.stroke(path); ctx.strokeStyle = '#fff'; ctx.lineWidth = 2.2; ctx.stroke(path); ctx.fillStyle = pts[j].color; ctx.fill(path); ctx.restore();
+          }
+          if (show < pts.length) { ctx.fillStyle = INK; ctx.font = `600 ${fs * .85}px ${FB}`; ctx.fillText('+' + (pts.length - show), sx + show * step, cy) }
+        } else if (r === 1) {
+          const ex = sx + Math.min(av, fs * 4); ctx.lineCap = 'round'; ctx.strokeStyle = 'rgba(255,255,255,.9)'; ctx.lineWidth = U(1.1); ctx.beginPath(); ctx.moveTo(sx, cy); ctx.lineTo(ex, cy); ctx.stroke();
+          ctx.strokeStyle = lg.line || TEAL; ctx.lineWidth = U(.55); ctx.beginPath(); ctx.moveTo(sx, cy); ctx.lineTo(ex, cy); ctx.stroke();
+        } else {
+          const aw = Math.min(av, fs * 3), ah = symSz * 1.05; ctx.beginPath(); ctx.rect(sx, cy - ah / 2, aw, ah); ctx.globalAlpha = .22; ctx.fillStyle = lg.area || TEAL; ctx.fill(); ctx.globalAlpha = 1; ctx.strokeStyle = lg.area || TEAL; ctx.lineWidth = U(.55); ctx.stroke();
+        }
+      });
+      ctx.textBaseline = 'top';
     }
-    if (disLines.length) {
-      ctx.fillStyle = MUTED; ctx.font = `400 ${disSize}px ${FB}`; const dx = o.logos ? lx + U(5) : x0, mx = x1 - dx; ctx.textAlign = o.logos ? 'right' : 'left';
-      let yy = ry + Math.max(0, (rowH - disLines.length * disSize * 1.38) / 2);
-      disLines.forEach(l => { ctx.fillText(fitText(ctx, l, mx), o.logos ? x1 : dx, yy); yy += disSize * 1.38 }); ctx.textAlign = 'left';
+    // analisis (opsional)
+    ctx.fillStyle = INK; ctx.font = `700 ${fs}px ${FB}`; ctx.fillText('Analisis', colX[2] + fpad, fTop + fpad); ctx.font = `400 ${fs}px ${FB}`; txt(c3L, 2, fTop + fpad + flh);
+    // sumber + produksi
+    ctx.font = `400 ${fs}px ${FB}`; txt(c4L, 3, fTop + fpad);
+    {
+      const px0 = colX[3] + fpad, cy1 = prodTop + (prodH - (oneRow || !hasLogo ? (hasLogo ? lgH : flh) : flh + G * .5 + lgH)) / 2;
+      ctx.fillStyle = INK; ctx.font = `400 ${fs}px ${FB}`;
+      if (!hasLogo) { ctx.fillText(fitText(ctx, 'Diproduksi dengan TAPAK App', inW(3)), px0, prodTop + fpad * .7); ctx.fillText(fitText(ctx, 'by Spectra CC', inW(3)), px0, prodTop + fpad * .7 + flh) }
+      else {
+        let lx = px0, ly = cy1; const rowMid = () => ly + lgH / 2;
+        if (oneRow) { ctx.textBaseline = 'middle'; ctx.fillText('Diproduksi dengan', lx, rowMid()); lx += wProd + G * 2; ctx.textBaseline = 'top' }
+        else { ctx.fillText('Diproduksi dengan', px0, ly); ly += flh + G * .5 }
+        const k = oneRow ? 1 : Math.min(1, inW(3) / wLogos);       // baris logo diperkecil bila masih terlalu lebar
+        const lh2 = lgH * k, mid = ly + lgH / 2; ctx.textBaseline = 'middle';
+        const word = (t, w0) => { ctx.font = `800 ${fs * k}px ${FH}`; ctx.fillStyle = NAVY; ctx.fillText(t, lx, mid); lx += w0 * k };
+        if (logoImgs.tapak) { ctx.drawImage(logoImgs.tapak, lx, mid - lh2 / 2, lw1 * k, lh2); lx += (lw1 + G) * k; word('TAPAK App', wTap) }
+        if (logoImgs.tapak && logoImgs.spectra) { ctx.font = `400 ${fs * k}px ${FB}`; ctx.fillStyle = INK; lx += G * 2 * k; ctx.fillText('by', lx, mid); lx += (wBy + G * 2) * k }
+        if (logoImgs.spectra) { ctx.drawImage(logoImgs.spectra, lx, mid - lh2 / 2, lw2 * k, lh2); lx += (lw2 + G) * k; word('Spectra CC', wSpc) }
+        ctx.textBaseline = 'top';
+      }
     }
-    ctx.strokeStyle = NAVY; ctx.lineWidth = Math.max(1, U(.25)); ctx.strokeRect(U(3.5), U(3.5), Wpx - U(7), Hpx - U(7));
+    ctx.strokeStyle = NAVY; ctx.lineWidth = Math.max(1, U(.4)); ctx.strokeRect(U(2.5), U(2.5), Wpx - U(5), Hpx - U(5));
     prog(1, 'Selesai');
     return { canvas: cv, info };
   }

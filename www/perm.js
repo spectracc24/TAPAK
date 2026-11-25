@@ -83,7 +83,7 @@ function showPerm(st, hint) {
   el.hidden = false;
   document.getElementById('pgo').addEventListener('click', grantClick);
   const sk = document.getElementById('pskip');
-  if (sk) sk.addEventListener('click', hidePerm);
+  if (sk) sk.addEventListener('click', () => { hidePerm(); introOnce(); });
 }
 
 // ---------- alur ----------
@@ -98,15 +98,17 @@ async function grantClick() {
   const miss = missingOf(await permStatus(), PERMS.map(p => p.id));   // dialog meminta semua, termasuk yang disarankan
   if (miss.length) await permRequest(miss);
   const st = await permStatus();
-  if (!missingOf(st).length) { hidePerm(); onPermOk(st); if (!missingOf(st, PERMS.map(p => p.id)).length) toast('Semua izin sudah diberikan'); }
+  if (!missingOf(st).length) { hidePerm(); onPermOk(st); if (!missingOf(st, PERMS.map(p => p.id)).length) toast('Semua izin sudah diberikan'); introOnce(); }
   else showPerm(st, HINT_SETTINGS);
 }
 
 async function ensurePerms() {
-  if (!native || permBusy) return;
+  if (permBusy) return;
+  if (!window.flowOn) return;      // izin baru diminta setelah splash dan persetujuan syarat & privasi selesai
+  if (!native) { introOnce(); return }
   lastCheck = Date.now();
   const st = await permStatus();
-  if (!missingOf(st).length) { hidePerm(); onPermOk(st); }
+  if (!missingOf(st).length) { hidePerm(); onPermOk(st); introOnce(); }
   else showPerm(st);
 }
 
@@ -147,8 +149,6 @@ window.takePhoto = async function (inputId) {          // 'cam' | 'gal'
   };
   const lc = window.locate;                            // tombol ◎
   window.locate = function () { if (!fix) needPerm(['location']); lc(); };
-  const cw = window.closeWelcome;                      // setelah sambutan ditutup, minta izin
-  window.closeWelcome = function () { cw(); setTimeout(ensurePerms, 300); };
 }
 
 // Saat aplikasi dibuka: izin diminta setelah pengguna menekan "Jelajahi Peta" di splash (enterApp di ui.js),

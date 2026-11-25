@@ -68,7 +68,7 @@ h2,h3,h4{font-family:var(--hf);color:var(--head);margin:0 0 .5em;letter-spacing:
 
 /* peta */
 #map{position:absolute;inset:0 0 calc(var(--nav) + var(--sb)) 0;background:var(--surface);font-family:var(--bf)}
-.lt{background:var(--card);color:var(--head);border:1px solid var(--line);box-shadow:var(--shadow);border-radius:6px;font:700 12px var(--hf);padding:2px 7px}
+.lt{background:var(--card);color:var(--head);border:1px solid var(--line);box-shadow:var(--shadow);border-radius:6px;font:700 var(--lt-fs,12px)/1.25 var(--hf);padding:2px 7px}
 .lt::before{display:none}
 
 /* kartu melayang di atas peta */
@@ -189,7 +189,7 @@ nav .add span{margin-top:-2px}
 .card h2{font-weight:800;font-size:26px;line-height:1.15;margin:0 0 12px}
 .card .rule3{width:64px;height:3px;margin-bottom:14px}
 .card .eyebrow{margin-top:0}
-#welcome,#perm{position:fixed;inset:0;z-index:4000;background:rgba(10,24,39,.62);display:flex;align-items:center;justify-content:center;padding:18px}
+#welcome,#perm,#consent{position:fixed;inset:0;z-index:4000;background:rgba(10,24,39,.62);display:flex;align-items:center;justify-content:center;padding:18px}
 #perm{z-index:4500}#perm .card{max-height:90vh;overflow:auto}
 .step{display:flex;gap:12px;margin:12px 0;align-items:flex-start}
 .step>b{flex:none;width:34px;height:34px;border-radius:8px;background:var(--soft);color:var(--head);display:grid;place-items:center;font:800 15px var(--hf)}
@@ -337,3 +337,24 @@ nav button.paused{color:#C98A00}
 #mx .mxprog{position:relative;height:26px;border-radius:6px;background:var(--soft);overflow:hidden;margin-bottom:10px}
 #mx .mxprog i{position:absolute;inset:0 auto 0 0;background:var(--teal);opacity:.35;transition:width .2s}
 #mx .mxprog span{position:relative;display:block;text-align:center;font:600 13px/26px var(--bf);color:var(--head)}
+
+#mx .mxsl{margin:8px 0}#mx .mxsl>span{display:block;font:600 13.5px var(--bf);color:var(--head)}#mx .mxsl small{color:var(--muted);font-weight:400}
+#mx .mxsl input[type=range]{flex:1;min-height:34px;padding:0;margin:0;accent-color:var(--teal)}
+#mx .mxsl .mxnum{width:84px;flex:none}
+#mx .mxl .item .btn{flex:none}
+
+/* ===== v1.6: persetujuan, dukung pengembang, versi, laporan ===== */
+#consent{position:fixed;inset:0;z-index:4400;background:rgba(10,24,39,.7);display:flex;align-items:center;justify-content:center;padding:18px}
+#consent .card{max-height:92vh;display:flex;flex-direction:column}
+#consent .cs-body{flex:1;min-height:0;overflow:auto;border:1px solid var(--line);border-radius:8px;padding:4px 12px;margin:0 0 12px;font-size:14px;background:var(--surface)}
+#consent .cs-body h4{margin:12px 0 6px}#consent .cs-body ul{margin:0 0 8px;padding-left:18px}#consent .cs-body li{margin:0 0 6px}
+#consent .cs-ck{display:flex;gap:10px;align-items:flex-start;font-size:14px;margin:0 0 12px;cursor:pointer}
+#consent .cs-ck input{width:22px;height:22px;flex:none;margin:1px 0 0;accent-color:var(--teal)}
+#welcome .card{max-height:92vh;overflow:auto}
+.btn-ghost{margin-top:12px;min-width:230px;min-height:48px;padding:12px 24px;border-radius:10px;font-size:15px;background:transparent;color:#fff;border-color:rgba(255,255,255,.55);animation:enter-in .6s .3s both}
+.btn-ghost:active{background:rgba(255,255,255,.14)}
+.btn-ghost:focus-visible{outline:3px solid #7FD6DA;outline-offset:3px}
+@media (prefers-reduced-motion:reduce){.btn-ghost{animation:none}}
+#splash .ver{font:600 11.5px var(--bf);letter-spacing:.08em;opacity:.7;margin-top:2px}
+.rpcap{min-height:78px;margin:8px 0;display:flex;justify-content:center}
+#sheet textarea#rpd{resize:vertical}

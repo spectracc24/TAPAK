@@ -3,165 +3,182 @@
 **Teknologi Akuisisi dan Pencatatan Hutan Kita**
 *Every Track Tells a Story.*
 
-Aplikasi Android untuk pemetaan, navigasi, dan pencatatan lapangan yang bekerja tanpa internet.
+Aplikasi Android untuk pemetaan, navigasi, dan pencatatan lapangan yang tetap berfungsi tanpa internet.
 
 > Dikembangkan oleh **Spectra Citra Cendekia (Spectra CC)** · *Science into Sustainable Solutions.*
- 
+> Website: <https://spectracc24.github.io/spectracc> · Kontak: cc.spectra24@gmail.com
+
 ---
 
-## 1. Tentang Aplikasi
+## 1. Apa itu TAPAK
+
+TAPAK membantu tim lapangan (patroli hutan, survei, pemetaan partisipatif) menandai titik, merekam jalur, menggambar area, dan memotret temuan dengan koordinat. Peta dasar bisa berupa **GeoPDF** yang diimpor ke HP sehingga tetap terpakai di tempat tanpa sinyal. Semua data tersimpan di HP dan dapat diekspor ke format GIS standar atau dicetak sebagai peta berlayout.
 
 | | |
 |---|---|
 | **Nama** | TAPAK |
-| **Kepanjangan** | Teknologi Akuisisi dan Pencatatan Hutan Kita |
+| **Versi saat ini** | **1.6.0** |
 | **Tagline** | Every Track Tells a Story. |
-| **Versi** | 1.3.0 |
-| **Pengembang** | Spectra Citra Cendekia (Spectra CC) |
+| **Pengembang** | Spectra Citra Cendekia (Spectra CC), Pontianak, Kalimantan Barat |
 | **ID aplikasi** | `id.tapak.patroli` |
 | **Platform** | Android |
 | **Bahasa antarmuka** | Indonesia |
 
-TAPAK dibuat sebagai alternatif ringan untuk aplikasi peta lapangan berbayar. Aplikasi ini memakai peta PDF berreferensi geografis (GeoPDF), misalnya hasil ekspor ArcMap atau QGIS, sebagai peta dasar saat tidak ada sinyal. Data yang dikumpulkan tersimpan di HP dan dapat diekspor ke format standar GIS.
-
-## 2. Kegunaan
-
-- **Navigasi dan orientasi peta** memakai posisi GPS, kompas, dan skala.
-- **Peta offline:** impor GeoPDF dari HP, tampil sesuai posisi sebenarnya, dengan pengaturan transparansi.
-- **Peta online gratis** (jalan, kontur, satelit) saat ada internet.
-- **Rekam jejak patroli (tracking):** jarak dan durasi tampil langsung, bisa **dijeda dan dilanjutkan**, hasilnya disimpan sebagai jalur. Interval pencatatan 2 detik (baku), 30 detik, semua fix, atau custom. Tetap merekam saat aplikasi diminimalkan, ditandai notifikasi di bilah status. 
-- **Elevasi:** dari GPS dengan koreksi geoid EGM96 (offline), tampil di layar, tersimpan pada titik dan jejak (naik/turun, profil elevasi), dan bisa dikalibrasi.
-- **Batas akurasi GPS:** baku 32 m (setara Avenza); peringatan atau blokir saat menandai titik bila akurasi lebih buruk; titik jejak yang melebihi batas dilewati.
-- **Kelola banyak data:** cari, saring, **sembunyikan/tampilkan**, pilih beberapa objek untuk disembunyikan, diberi simbol, diekspor, atau dihapus.
-- **Simbol:** 6 bentuk titik, 8 warna, gaya garis (tegas/putus/titik), ukuran simbol, label nama (tampil/otomatis/sembunyi), dan warna otomatis menurut atribut “Jenis”. **Tetap merekam saat layar dikunci atau aplikasi diminimalkan** (layanan latar depan dengan notifikasi permanen), dan jejak yang belum disimpan dipulihkan otomatis bila aplikasi tertutup.
-- **Tandai titik, gambar jalur, dan gambar area** langsung di peta atau dari lokasi GPS.
-- **Ukur jarak dan luas** (metrik, imperial, atau nautika).
-- **Atribut objek:** nama, keterangan, dan data tambahan bebas (jenis, jumlah, kondisi, dan lain-lain).
-- **Foto lampiran dengan geotag:** koordinat dituliskan ke EXIF foto. Foto kamera dan galeri sama-sama didukung.
-- **Navigasi ke titik tujuan:** jarak dan arah dari posisi saat ini.
-- **Sistem koordinat:** derajat desimal (WGS84), derajat-menit-detik, dan UTM. Ketuk kotak koordinat di kiri atas untuk berganti.
-- **Ekspor data:** GeoJSON, KMZ, dan SHP (zip). Pilih semua, terpilih, atau yang tampil; **Simpan ke perangkat** (dialog “Simpan sebagai” Android) atau **Bagikan**. Elevasi, akurasi GPS, dan simbol ikut sebagai atribut.
-- **Ekspor peta berlayout (v1.5):** Lainnya → Ekspor peta. Kertas A4, A3, atau custom (cm), lanskap/portrait; judul, deskripsi, nama pembuat, tanggal ekspor; pilih data lapangan, basemap online (jalan, kontur, satelit) dan/atau peta PDF offline; label data (nama, elevasi, panjang/luas); grid koordinat (derajat, DMS, UTM); arah utara, skala, logo TAPAK dan Spectra CC beserta keterangan sumber. Hasil PDF, PNG, atau JPEG berukuran kertas sebenarnya (metadata DPI tertanam). Kode: `www/mapexport.js` (mesin), `www/mapexport-ui.js` (panel); uji: `npm run test:map`.
-- **Pengaturan** lengkap dengan tombol **Kembalikan ke default**.
-
-## 3. Teknologi dan Package
-
-**Kerangka aplikasi**
-- Aplikasi web (HTML, CSS, JavaScript tanpa framework) yang dibungkus menjadi APK dengan **Capacitor 8**.
-- Build APK otomatis di **GitHub Actions** (Ubuntu, Node 22, Java 21 Temurin, Gradle 8.14, Android SDK 36).
-
-**Package Capacitor (versi dikunci di `package-lock.json`)**
-
-| Package                             | Versi  | Fungsi                                                                    |
-| ----------------------------------- | ------ | ------------------------------------------------------------------------- |
-| `@capacitor/core`, `cli`, `android` | 8.6.2  | Pembungkus aplikasi menjadi APK                                           |
-| `@capacitor/geolocation`            | 8.2.5  | GPS di layar depan dan izin lokasi                                        |
-| `@capacitor-community/background-geolocation` | 1.3.1 | Merekam saat diminimalkan (layanan latar depan + notifikasi)  |
-| `@capacitor/local-notifications`    | 8.3.1  | Izin notifikasi (Android 13+) dan notifikasi “rekaman dijeda”             |
-| `@capacitor/camera`                 | 8.2.6  | Meminta izin kamera (foto tetap diambil lewat input bawaan)               |
-| `@capacitor/filesystem`             | 8.1.5  | Menulis berkas ekspor sementara                                           |
-| `@capacitor/share`                  | 8.0.3  | Membagikan berkas ekspor                                                  |
-| `@capacitor/assets` (dev)           | 4.0.0  | Membuat ikon dan splash Android                                          |
-
-Plugin lokal `FileSaver` (`native/FileSaverPlugin.java`, dipasang otomatis oleh workflow) membuka dialog “Simpan sebagai” Android (Storage Access Framework) tanpa izin penyimpanan.
-
-**Library peta dan data (versi TAPAK 1.0)** (disalin ke `www/lib` saat build agar jalan offline)
-| Library | Versi | Fungsi |
-|---|---|---|
-| Leaflet | 1.9.4 | Mesin peta |
-| pdf.js (`pdfjs-dist`) | 3.11.174 | Membaca dan merender PDF |
-| proj4 | 2.9.2 | Konversi koordinat (UTM) |
-| JSZip | 3.10.1 | Membuat berkas KMZ dan ZIP |
-| piexifjs | 1.0.6 | Menulis dan membaca geotag EXIF foto |
-| @mapbox/shp-write | 0.4.3 | Membuat Shapefile |
-
-**Penyimpanan:** IndexedDB di dalam aplikasi (objek, foto, peta PDF, pengaturan).
-
-**Izin Android:** lokasi (presisi dan perkiraan), kamera, internet, layanan latar depan (`FOREGROUND_SERVICE`, `FOREGROUND_SERVICE_LOCATION`), dan notifikasi (`POST_NOTIFICATIONS`); ditulis otomatis ke AndroidManifest oleh workflow build. Aplikasi **memeriksa izin setiap dibuka dan setiap kembali ke layar depan**, lalu menampilkan dialog bila ada yang belum diberikan (lihat bagian 6). Pilih foto dari galeri memakai pemilih foto bawaan Android yang tidak memerlukan izin tambahan.
- 
-## 4. Struktur Repo
-
-```
-www/index.html, style.css          Tampilan (token, ikon, dan komponen mengikuti situs Spectra CC)
-www/app.js, ui.js                   Logika aplikasi dan panel
-www/georef.js                       Georeferensi GeoPDF (parser, proyeksi, warp); diuji di test/
-test/georef.test.js                 Uji otomatis georeferensi (npm test; dijalankan juga di GitHub Actions)
-tools/make-assets.js                Membuat ikon dan splash dari logo vektor Spectra CC (npm run assets)
-assets/android/ic_tracking.xml      Ikon notifikasi rekam jejak (monokrom)
-www/perm.js                         Manajer izin (lokasi, kamera, notifikasi)
-native/                             FileSaverPlugin.java + MainActivity.java (dipasang saat build)
-tools/mark.js, make-assets.js       Logo pin + telapak kaki, pembuat ikon/splash/ikon notifikasi
-assets/                             Ikon dan splash sumber
-prepare.js                          Menyalin library ke www/lib saat build
-capacitor.config.json               Nama dan ID aplikasi
-package.json, package-lock.json      Dependensi (versi dikunci)
-.github/workflows/build.yml         Build APK otomatis
-```
-
-## 5. Catatan
+## 2. Fitur
 
 **Peta**
-- **Impor GeoPDF** (`www/georef.js`) membaca georeferensi ISO 32000 (`/Measure /GEO`) dari **halaman pertama**. Sejak v1.3: (1) proyeksi asli peta (UTM, geografis, atau WKT/EPSG lain) dibaca lalu tiap piksel di-warp secara eksak ke Web Mercator, tidak lagi memakai satu transformasi affine langsung; (2) bila PDF punya beberapa viewport (peta utama + inset), bingkai terluas yang dipakai; (3) objek PDF dalam object stream terkompresi (PDF 1.5+) ikut terbaca; (4) kartu peta menampilkan proyeksi, galat titik kontrol, dan resolusi. PDF tanpa georeferensi tetap ditolak. Saat ekspor dari ArcMap, centang **"Export Map Georeference Information"**; di QGIS, **"Create Geospatial PDF"**.
-- **Datum:** titik kontrol GPTS diperlakukan sebagai WGS84. Peta dengan datum lokal lain (mis. ID74) bisa bergeser sampai puluhan meter; pakai **Geser** di kartu peta PDF untuk kalibrasi, dan **Salin info georeferensi** untuk menelusuri sebab.
-- Pada peta yang sangat luas bisa ada selisih posisi kecil. Cek posisi GPS pada fitur yang dikenal sebelum dipakai.
-- Peta PDF sangat besar dirender dengan resolusi dibatasi, sehingga detail halus bisa berkurang.
-- **Peta online tidak disimpan** untuk offline. Tanpa internet, hanya peta PDF yang tampil. Pemakaian tile OpenStreetMap harus mengikuti kebijakan penggunaannya.
+- Peta offline dari **GeoPDF** (ArcMap/QGIS): proyeksi asli dibaca dan di-warp eksak, opasitas bisa diatur, ada geser manual untuk kalibrasi.
+- Peta online gratis (jalan, kontur, satelit) saat ada internet.
+- GPS, kompas, skala, dan tiga format koordinat: derajat desimal, derajat-menit-detik, UTM.
+- Ukuran font label nama objek di peta bisa diatur (Pengaturan → Data di peta).
 
-**Tracking dan GPS**
+**Pencatatan**
+- Tandai titik (dari GPS atau ketuk peta), gambar jalur dan area, ukur jarak dan luas.
+- Atribut bebas, foto lampiran dengan geotag EXIF, simbol (6 bentuk, 8 warna, gaya garis), warna otomatis menurut atribut “Jenis”.
+- Elevasi dengan koreksi geoid EGM96 (offline), profil elevasi, kalibrasi offset.
+- Batas akurasi GPS (baku 32 m) dengan peringatan atau blokir.
+- Cari, saring, sembunyikan, pilih banyak objek sekaligus.
 
-- **Tracking latar belakang** memakai layanan latar depan Android, sehingga selalu ada notifikasi “TAPAK sedang merekam jejak” selama merekam. Di Android 13+, izinkan notifikasi untuk TAPAK agar tanda ini terlihat (rekaman tetap berjalan walau notifikasi ditolak).
-- `useLegacyBridge: true` di `capacitor.config.json` **jangan dihapus**: tanpa itu, pembaruan lokasi latar belakang berhenti sekitar 5 menit setelah aplikasi diminimalkan.
-- Jangan geser-tutup TAPAK dari daftar aplikasi terbaru saat merekam. Pada HP Xiaomi, Oppo, Vivo, Samsung, dan merek lain dengan penghemat baterai agresif, atur Baterai TAPAK ke **Tanpa batasan**.
-- Rekaman yang terputus (aplikasi ditutup paksa, HP restart) dilanjutkan otomatis saat TAPAK dibuka lagi; bagian yang hilang selama terputus tampak sebagai garis lurus.
-- Fix GPS pertama bisa lama, terutama di dalam bangunan atau di bawah kanopi lebat. Titik yang akurasinya melebihi batas (baku 32 m, bisa diubah di Pengaturan) tidak dicatat dalam track.
-- Kompas bergantung pada sensor HP dan bisa perlu dikalibrasi. Peta tidak berputar mengikuti arah HP.
+**Rekam jejak (tracking)**
+- Bisa dijeda dan dilanjutkan; jarak selama jeda tidak dihitung.
+- Tetap merekam saat layar dikunci atau aplikasi diminimalkan.
+- Notifikasi bilah status: hijau **“Sedang tracking”** begitu rekaman dimulai, berganti oranye **“Track dijeda”** saat dijeda, kembali ke “Sedang tracking” saat dilanjutkan, dan hilang semua begitu rekaman dihentikan.
+- Interval 2 detik, 30 detik, semua fix, atau custom.
 
-**Data dan ekspor**
-- Tidak ada fitur impor GeoJSON, KML, atau SHP, dan tidak ada pengeditan titik (vertex) setelah objek disimpan.
-- Elevasi berasal dari GPS HP: ketelitian vertikal biasanya 2–3× lebih buruk dari horizontal. Untuk elevasi titik di luar jangkauan sinyal, atau titik yang ditandai manual di peta, elevasi tidak tersedia (belum ada model elevasi/DEM offline).
-- Ikon KMZ memakai titik bulat berwarna; bentuk simbol lengkap tersimpan sebagai atribut `simbol`.
-- Foto diperkecil maksimal 1600 px dan disimpan di dalam aplikasi, jadi banyak foto menambah ukuran data.
-- Shapefile membatasi nama atribut maksimal 10 karakter, dan koordinatnya WGS84.
-- Satu objek hanya bertipe titik, jalur, atau area. Tidak ada lapisan (layer) terpisah.
+**Ekspor data:** GeoJSON, KMZ, SHP (zip); semua, terpilih, atau yang tampil; simpan ke perangkat atau bagikan.
 
-**Distribusi**
-- Tanpa keystore, workflow hanya membuat APK **debug** (bertanda `DEBUG-jangan-dibagikan`). Untuk dibagikan, isi secrets penandatanganan di bagian 6.
-- Belum diuji pada semua merek dan versi Android. Uji di beberapa HP sebelum dipakai luas.
+**Ekspor peta berlayout (PDF, PNG, JPEG)** — Lainnya → Ekspor peta
+- Kertas A4, A3, atau custom (cm); lanskap atau portrait. Semua ukuran font dalam pt untuk A4 dan diskalakan otomatis untuk ukuran lain.
+- Struktur halaman: **judul** (12 pt, tebal) dan **deskripsi** (10 pt) → **kanvas peta** (grid koordinat, arah utara di kanan atas, skala di kiri bawah) → **kotak kaki 4 kolom** (10 pt):
+  1. Info: dibuat oleh, lokasi survey (hanya bila diisi), tanggal pembuatan, ukuran kertas, sistem koordinat (otomatis).
+  2. Legenda tetap tiga: titik (semua bentuk simbol yang dipakai), jalur, area.
+  3. Analisis (opsional): jumlah titik, panjang garis, luas area; bila mati tertulis “Analisis tidak disajikan”.
+  4. Sumber data dan basemap, serta “Diproduksi dengan TAPAK App by Spectra CC”.
+- Ukuran font label objek dapat diatur dengan slider atau angka (pt).
+- Tata letak menghindari tumpang tindih: teks panjang menambah baris lalu dipotong dengan “…”; label dicoba di beberapa posisi dan yang tidak muat dilaporkan.
+- **Draft layout:** simpan, ubah, dan hapus. Draft yang sudah berhasil diekspor otomatis dihapus.
 
-## 6. Keamanan, Izin, dan Penandatanganan APK
+**Lainnya**
+- Persetujuan syarat dan kebijakan privasi di awal (sekali; muncul lagi hanya bila versinya naik).
+- Kartu pengenalan fitur setelah izin diberikan (sekali), dengan tautan ke website.
+- Lainnya → **Laporkan bug / penyalahgunaan** (subjek email = jenis laporan, captcha, butuh internet).
+- Tombol **Dukung Pengembang** di halaman awal; nomor versi tampil di halaman awal, menu Lainnya, dan Tentang.
 
-**Izin aplikasi.** `www/perm.js` memeriksa izin lokasi presisi dan kamera saat aplikasi dibuka dan setiap kali kembali aktif. Jika belum diberikan, tampil dialog dengan tombol *Berikan izin*. Bila Android sudah menolak permanen, dialog menampilkan petunjuk membuka Pengaturan; begitu pengguna kembali, izin dicek ulang otomatis. Fitur rekam jejak dan kamera juga meminta izin saat dipakai. Ubah `PERM_STRICT = true` di `perm.js` untuk menyembunyikan tombol *Nanti saja*.
+## 3. Persyaratan Sistem
 
-**Penandatanganan rilis (sekali saja).**
-1. Buat kunci: `keytool -genkeypair -v -keystore tapak.jks -alias tapak -keyalg RSA -keysize 4096 -validity 10000`
-2. Simpan `tapak.jks` di tempat aman **di luar repo** dan buat cadangannya. Kunci hilang = APK tidak bisa diperbarui.
-3. Encode: `base64 -w0 tapak.jks`
-4. Di GitHub: Settings → Secrets and variables → Actions, tambahkan `ANDROID_KEYSTORE_B64`, `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS`, `ANDROID_KEY_PASSWORD`.
-5. Setiap push kini menghasilkan APK rilis bertanda tangan dan `SHA256SUMS.txt`. Cocokkan checksum sebelum membagikan. `versionCode` naik otomatis sehingga APK baru dapat menimpa versi lama tanpa menghapus data.
+| | |
+|---|---|
+| **Android** | 7.0 (API 24) atau lebih baru; dikompilasi untuk Android 16 (API 36) |
+| **Sensor** | GPS (disarankan), kompas; kamera opsional |
+| **Izin** | Lokasi presisi, kamera, notifikasi (Android 13+), layanan latar depan lokasi |
+| **Internet** | Tidak wajib. Dipakai hanya untuk peta online dan mengirim laporan bug |
+| **Penyimpanan** | Foto dan peta PDF disimpan di dalam aplikasi; beri ruang secukupnya |
+| **Baterai** | Di Xiaomi, Oppo, Vivo, Samsung dan sejenisnya, atur Baterai TAPAK ke “Tanpa batasan” agar rekaman latar belakang stabil |
 
-**Kebijakan Android untuk APK di luar Play Store.** Google mulai mewajibkan verifikasi developer secara bertahap, termasuk di Indonesia sejak akhir September 2026. Periksa persyaratan terbaru di developer.android.com/developer-verification sebelum membagikan APK ke banyak pengguna.
+## 4. Pengembang
 
-Pelaporan kerentanan: lihat `SECURITY.md`.
+**Spectra Citra Cendekia (Spectra CC)** · <https://spectracc24.github.io/spectracc> · cc.spectra24@gmail.com
+Pontianak, Kalimantan Barat, Indonesia.
 
-## 7. Lisensi dan Atribusi
+## 5. Teknologi dan Package
 
-Peta dasar online: © kontributor OpenStreetMap, OpenTopoMap, dan Esri. Library pihak ketiga memakai lisensi masing-masing (Leaflet BSD-2, pdf.js Apache-2.0, proj4 MIT, JSZip MIT/GPLv3, piexifjs MIT, shp-write BSD). Logo dan identitas visual Spectra CC mengikuti *Brand Identity & Strategic Guideline* v1.0 (Spectra Citra Cendekia, terdaftar AHU-015113.AH.01.30 Tahun 2025). Tentukan lisensi TAPAK sendiri sesuai kebijakan organisasi Anda.
+**Kerangka:** aplikasi web (HTML, CSS, JavaScript tanpa framework) dibungkus menjadi APK dengan **Capacitor 8**. Build otomatis di GitHub Actions (Ubuntu, Java 21 Temurin, Android SDK 36).
 
-## 8. Catatan Versi 1.4.0
+| Package | Versi | Fungsi |
+|---|---|---|
+| `@capacitor/core`, `cli`, `android` | 8.6.2 | Pembungkus aplikasi menjadi APK |
+| `@capacitor/geolocation` | 8.2.5 | GPS layar depan, izin lokasi |
+| `@capacitor-community/background-geolocation` | 1.3.1 | Rekaman latar belakang (layanan latar depan) |
+| `@capacitor/local-notifications` | 8.3.1 | Izin notifikasi dan notifikasi “Track dijeda” |
+| `@capacitor/camera` | 8.2.6 | Izin kamera |
+| `@capacitor/filesystem` | 8.1.5 | Berkas ekspor sementara |
+| `@capacitor/share` | 8.0.3 | Berbagi berkas |
+| `@capacitor/assets` (dev) | 4.0.0 | Ikon dan splash |
+| Leaflet | 1.9.4 | Mesin peta |
+| pdf.js (`pdfjs-dist`) | 6.5.438 | Membaca dan merender GeoPDF |
+| proj4 | 2.9.2 | Proyeksi koordinat (UTM) |
+| JSZip | 3.10.1 | KMZ dan ZIP |
+| piexifjs | 1.0.6 | Geotag EXIF foto |
+| @mapbox/shp-write | 0.4.3 | Shapefile |
+| egm96-universal | 1.1.1 | Model geoid offline |
+| @fontsource/manrope, inter | 5.3.0 | Font identitas Spectra CC |
 
-- Peta PDF yang disembunyikan kini jelas ditandai (badge, kartu putus-putus, catatan, tombol berubah, titik pada tombol lapisan); status tersimpan.
-- Simpan ke perangkat, ekspor sebagian data, sembunyikan/tampilkan data, pilih banyak objek, simbol (bentuk/warna/gaya).
-- Elevasi (koreksi geoid EGM96, kalibrasi offset), profil elevasi jalur, selisih elevasi ke tujuan.
-- Jeda/lanjut rekaman; jarak selama jeda tidak dihitung (jejak menjadi multi-segmen). Interval 2 dtk / 30 dtk / semua fix / custom.
-- Notifikasi “sedang merekam” kini tampil: meminta izin `POST_NOTIFICATIONS` (Android 13+) dan memakai ikon monokrom TAPAK (sebelumnya ikon launcher berwarna).
-- Batas akurasi horizontal (baku 32 m) dengan peringatan/blokir; Pengaturan lengkap + reset default.
-- Logo aplikasi: pin + telapak kaki (tanpa unsur logo pengembang); logo Spectra CC hanya di “Dikembangkan oleh”.
-- Perbaikan: tata letak “Tentang”; KMZ memakai tag `<name>` yang valid (sebelumnya `<n>`, sehingga nama objek tidak tampil di Google Earth); Shapefile jalur kini satu record per jalur (library sebelumnya menggabung semua jalur menjadi satu record).
+Plugin lokal `FileSaver` (`native/`) membuka dialog “Simpan sebagai” Android. Penyimpanan data memakai IndexedDB di dalam aplikasi.
+Layanan pihak ketiga hanya untuk laporan bug: **Formspree** (penerus email) dan **hCaptcha** (captcha).
 
-## 9. Catatan Versi 1.4.1 (perbaikan)
+**Struktur repo**
 
-- **CSP:** titik koma yang hilang di `index.html` (`'wasm-unsafe-eval' style-src ...`) membuat `style-src` terbaca sebagai nilai `script-src`, sehingga semua atribut `style=""` inline diblokir (logo Spectra hilang, swatch warna polos). Diperbaiki, dan `prepare.js` kini menghentikan build bila CSP salah format.
-- **Logo Spectra & swatch:** warnanya kini lewat class CSS / atribut SVG, tidak lagi bergantung pada `style=""` inline.
-- **Notifikasi “sedang merekam” tidak hilang:** di Capacitor 8 `addWatcher` (bertipe callback) mengembalikan string id, bukan Promise. Kode lama memanggil `.catch()` pada string itu sehingga id watcher tidak pernah tersimpan dan `removeWatcher` tidak pernah dipanggil. Kini dibungkus `Promise.resolve()` (juga pada `watchPosition`).
-- **Splash:** tidak lagi menutup otomatis; ada tombol **Jelajahi Peta**. Sambutan pertama kali dan permintaan izin muncul setelah tombol ditekan.
+```
+www/index.html, style.css     Tampilan
+www/app.js, ui.js             Logika aplikasi, panel, notifikasi tracking
+www/extras.js, config.js      Persetujuan, laporan bug, tautan website, konfigurasi publik
+www/mapexport.js              Mesin layout & ekspor peta (kanvas -> PNG/JPEG/PDF)
+www/mapexport-ui.js           Panel ekspor peta, draft layout
+www/perm.js, georef.js        Izin Android; georeferensi GeoPDF
+native/                       FileSaverPlugin.java, MainActivity.java (dipasang saat build)
+test/                         Uji otomatis: npm test, npm run test:map
+tools/, assets/, prepare.js   Ikon, splash, penyalinan library
+.github/workflows/build.yml   Build APK otomatis
+```
 
+## 6. Menyiapkan laporan bug (sekali oleh pemilik repo)
+
+Fitur laporan tidak punya server sendiri. Tanpa langkah ini, tombol **Kirim laporan** memakai cadangan: membuka aplikasi email dengan subjek dan isi terisi.
+
+1. Daftar di <https://formspree.io> dengan **cc.spectra24@gmail.com**, buat formulir, salin ID-nya (bagian setelah `/f/`).
+2. Daftar di <https://www.hcaptcha.com>, buat site, salin **Site key** dan **Secret key**.
+3. Di pengaturan formulir Formspree, aktifkan CAPTCHA hCaptcha dan tempel **Secret key** di sana.
+4. Isi `www/config.js`: `formspreeId` dan `hcaptchaSiteKey` (kedua nilai ini publik). **Jangan** menaruh secret key di repo.
+5. Build ulang, lalu kirim satu laporan uji dari HP.
+
+Subjek email = jenis laporan (“Bug” atau “Penyalahgunaan”). Pengiriman gagal dengan pemberitahuan bila tidak ada sinyal.
+
+## 7. Catatan penggunaan
+
+- `useLegacyBridge: true` di `capacitor.config.json` **jangan dihapus**; tanpa itu pembaruan lokasi latar belakang berhenti sekitar 5 menit setelah aplikasi diminimalkan.
+- Jangan geser-tutup TAPAK dari daftar aplikasi terbaru saat merekam.
+- Rekaman yang terputus (aplikasi ditutup paksa, HP restart) dilanjutkan saat TAPAK dibuka lagi.
+- Datum: titik kontrol GeoPDF diperlakukan sebagai WGS84; peta berdatum lokal bisa bergeser, gunakan **Geser** untuk kalibrasi.
+- Peta online tidak disimpan untuk offline; pemakaian tile mengikuti kebijakan penyedia.
+- Elevasi dari GPS HP: ketelitian vertikal biasanya 2–3× lebih buruk dari horizontal.
+- Belum ada impor GeoJSON/KML/SHP maupun edit vertex setelah objek disimpan.
+- Belum diuji di semua merek dan versi Android.
+
+## 8. Keamanan, izin, dan penandatanganan APK
+
+Izin diperiksa setiap aplikasi dibuka dan setiap kembali aktif (`www/perm.js`; `PERM_STRICT = true` menyembunyikan “Nanti saja”). Tanpa keystore, workflow hanya membuat APK **debug**. Untuk rilis:
+
+1. `keytool -genkeypair -v -keystore tapak.jks -alias tapak -keyalg RSA -keysize 4096 -validity 10000`
+2. Simpan `tapak.jks` **di luar repo** dan buat cadangannya (kunci hilang = APK tidak bisa diperbarui).
+3. `base64 -w0 tapak.jks`, lalu di GitHub Settings → Secrets → Actions tambahkan `ANDROID_KEYSTORE_B64`, `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS`, `ANDROID_KEY_PASSWORD`.
+4. Setiap push menghasilkan APK rilis bertanda tangan dan `SHA256SUMS.txt`.
+
+Google mulai mewajibkan verifikasi developer untuk APK di luar Play Store secara bertahap; periksa persyaratan terbaru di developer.android.com/developer-verification. Pelaporan kerentanan: lihat `SECURITY.md`.
+
+## 9. Lisensi dan Atribusi
+
+Peta dasar online: © kontributor OpenStreetMap; tampilan kontur © OpenTopoMap (CC-BY-SA); citra: Esri, Maxar, Earthstar Geographics, dan komunitas pengguna GIS.
+
+Library pihak ketiga memakai lisensinya masing-masing: Leaflet (BSD-2-Clause), pdf.js (Apache-2.0), proj4 (MIT), JSZip (MIT atau GPL-3.0), piexifjs (MIT), @mapbox/shp-write (BSD-2-Clause), egm96-universal (MIT), Capacitor (MIT), font Manrope dan Inter (SIL OFL).
+
+Logo dan identitas visual Spectra CC mengikuti *Brand Identity & Strategic Guideline* v1.0 (Spectra Citra Cendekia, AHU-015113.AH.01.30 Tahun 2025). **Lisensi kode TAPAK sendiri belum ditetapkan**; tentukan sesuai kebijakan organisasi lalu tambahkan berkas `LICENSE`.
+
+## 10. Catatan Versi Terkini — 1.6.0
+
+**Ekspor peta**
+- Layout baru mengikuti rancangan: judul 12 pt, deskripsi 10 pt, kanvas, dan kotak kaki 4 kolom (info, legenda, analisis, sumber + produksi), untuk lanskap dan portrait, semua font dalam pt dan diskalakan menurut ukuran kertas.
+- Kolom baru “Lokasi pengukuran/survey”; opsi “Sajikan analisis”; tanggal, ukuran kertas, sistem koordinat otomatis.
+- Slider ukuran font label; label bisa 2–3 baris, menghindari simbol, kartu utara/skala, dan label lain.
+- Draft layout (simpan, ubah, hapus); draft yang sudah diekspor otomatis hilang.
+- Tinggi kaki mengikuti isi; teks kepanjangan menambah baris atau dipotong “…”.
+
+**Tracking**
+- Izin notifikasi diminta *sebelum* rekaman dimulai agar notifikasi “Sedang tracking” langsung tampil. Saat dijeda diganti notifikasi oranye “Track dijeda”; saat dilanjutkan kembali; semuanya hilang saat dihentikan atau dibuang. Notifikasi sisa dibersihkan saat aplikasi dibuka tanpa rekaman aktif.
+
+**Alur awal**
+- Persetujuan syarat dan privasi (sekali), kartu pengenalan fitur setelah izin (sekali), tombol **Dukung Pengembang**, nomor versi di halaman awal.
+- Lainnya → Laporkan bug / penyalahgunaan dengan captcha.
+- Ukuran font label nama di peta dapat diatur di Pengaturan.
+- Uji otomatis `test/mapexport.test.js`; README diperbarui.
+
+Catatan rilis sebelumnya ada di riwayat commit.

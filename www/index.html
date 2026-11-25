@@ -6,7 +6,7 @@
     <meta name=viewport
         content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
     <meta http-equiv=Content-Security-Policy
-        content="default-src 'self'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://*.tile.openstreetmap.org https://tile.openstreetmap.org https://tile.opentopomap.org https://*.tile.opentopomap.org https://server.arcgisonline.com; worker-src 'self' blob:; connect-src 'self' data: blob:; object-src 'none'; base-uri 'none'; form-action 'none'">
+        content="default-src 'self'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://js.hcaptcha.com https://*.hcaptcha.com; style-src 'self' 'unsafe-inline' https://*.hcaptcha.com; img-src 'self' data: blob: https://*.tile.openstreetmap.org https://tile.openstreetmap.org https://tile.opentopomap.org https://*.tile.opentopomap.org https://server.arcgisonline.com https://*.hcaptcha.com; frame-src https://*.hcaptcha.com https://hcaptcha.com; worker-src 'self' blob:; connect-src 'self' data: blob: https://formspree.io https://*.hcaptcha.com https://hcaptcha.com; object-src 'none'; base-uri 'none'; form-action 'none'">
     <meta name=theme-color content="#17324d">
     <title>TAPAK · Spectra CC</title>
     <link rel=stylesheet href=lib/leaflet.css>
@@ -264,6 +264,9 @@
                 <path d="M7 6.5h6M7 9h9" />
                 <rect x="7" y="12" width="10" height="6" rx=".8" />
             </symbol>
+            <symbol id="i-heart" viewBox="0 0 24 24">
+                <path d="M12 20.5s-8-5-8-11a4.6 4.6 0 0 1 8-3 4.6 4.6 0 0 1 8 3c0 6-8 11-8 11z" />
+            </symbol>
             <symbol id="i-hand" viewBox="0 0 24 24">
                 <path d="M12 21s7-6 7-11a7 7 0 0 0-14 0c0 5 7 11 7 11z" />
                 <path d="M12 7v6M9 10h6" />
@@ -317,19 +320,48 @@
                 <use href=#i-menu></use>
             </svg><span>Lainnya</span></button>
     </nav>
+    <div id=consent hidden>
+        <div class=card role=dialog aria-modal=true aria-labelledby=cs-t>
+            <p class=eyebrow>Sebelum mulai</p>
+            <h2 id=cs-t>Syarat &amp; privasi</h2>
+            <div class=rule3></div>
+            <div class=cs-body tabindex=0>
+                <h4>Ketentuan pemakaian</h4>
+                <p>TAPAK membantu Anda mencatat titik, jalur, dan area di lapangan. Pakai dengan wajar:</p>
+                <ul>
+                    <li>Posisi GPS di HP bisa meleset beberapa meter, apalagi di bawah kanopi atau di dalam bangunan. Jangan jadikan TAPAK satu-satunya acuan untuk keselamatan, batas lahan, atau urusan hukum.</li>
+                    <li>Data yang Anda catat dan bagikan menjadi tanggung jawab Anda. Jangan dipakai untuk menguntit, melanggar hukum, atau merugikan orang lain. Hati-hati menyebarkan lokasi sensitif, misalnya sarang satwa dilindungi.</li>
+                    <li>Aplikasi ini diberikan apa adanya. Spectra CC tidak menanggung kerugian akibat salah posisi, data yang hilang, atau HP yang rusak. Ekspor data Anda secara berkala sebagai cadangan.</li>
+                    <li>Peta online (OpenStreetMap, OpenTopoMap, Esri) milik pihak lain, dan pemakaiannya mengikuti aturan mereka.</li>
+                </ul>
+                <h4>Kebijakan privasi</h4>
+                <ul>
+                    <li><b>Data Anda tinggal di HP.</b> Titik, jejak, foto, peta PDF, dan pengaturan disimpan di dalam aplikasi. Tidak ada akun, tidak ada server TAPAK, tidak ada iklan, dan tidak ada pelacak statistik.</li>
+                    <li><b>Izin yang diminta:</b> lokasi (untuk posisi dan rekaman jejak, termasuk saat layar mati selama Anda merekam), kamera (foto temuan), dan notifikasi (penanda rekaman sedang jalan atau dijeda).</li>
+                    <li><b>Peta online:</b> saat dipakai, server peta menerima alamat IP HP Anda dan bagian peta yang Anda lihat. Peta PDF yang Anda impor tidak dikirim ke mana pun.</li>
+                    <li><b>Laporan bug:</b> bila Anda mengirimnya, teks laporan, versi TAPAK, dan jenis perangkat dikirim lewat layanan formulir ke email Spectra CC. Layanan captcha yang dipakai (hCaptcha) juga melihat alamat IP Anda.</li>
+                    <li><b>Berkas yang Anda ekspor atau bagikan</b> menjadi urusan Anda dan penerimanya.</li>
+                    <li><b>Menghapus data:</b> hapus data dari dalam aplikasi, atau hapus data/uninstall TAPAK lewat pengaturan Android.</li>
+                </ul>
+                <p class=mut>Pertanyaan? Hubungi <b>cc.spectra24@gmail.com</b>. Berlaku mulai November 2026.</p>
+            </div>
+            <label class=cs-ck><input type=checkbox id=cs-ok onchange=consentTick()><span>Saya sudah membaca dan setuju dengan ketentuan pemakaian dan kebijakan privasi TAPAK.</span></label>
+            <button id=cs-go class="btn btn-p wide" onclick=acceptConsent() disabled>Setuju &amp; lanjut<svg class=ic aria-hidden=true><use href=#i-arrow></use></svg></button>
+        </div>
+    </div>
     <div id=welcome hidden>
         <div class=card>
             <p class=eyebrow>Selamat datang</p>
-            <h2>Mulai dengan TAPAK</h2>
+            <h2>Kenali TAPAK</h2>
             <div class=rule3></div>
-            <p class=step><b>1</b><span><strong>Pasang peta</strong><br>Tekan <i>Peta</i> lalu <i>Impor peta PDF</i>
-                    agar bisa dipakai tanpa sinyal.</span></p>
-            <p class=step><b>2</b><span><strong>Tandai temuan</strong><br>Tekan <i>Tambah</i> untuk menandai titik,
-                    jalur, atau area.</span></p>
-            <p class=step><b>3</b><span><strong>Rekam perjalanan</strong><br>Tekan <i>Rekam</i> saat mulai patroli;
-                    gunakan <i>Jeda</i> bila berhenti sebentar. Tetap merekam walau layar dikunci atau aplikasi
-                    diminimalkan, ditandai notifikasi di bilah status.</span></p>
-            <button class="btn btn-p wide" onclick=closeWelcome()>Mulai<svg class=ic>
+            <p class=step><b>1</b><span><strong>Peta tanpa sinyal</strong><br>Tekan <i>Peta</i> lalu <i>Impor peta PDF</i> (GeoPDF)
+                    agar peta bisa dipakai di hutan.</span></p>
+            <p class=step><b>2</b><span><strong>Tandai temuan</strong><br>Tekan <i>Tambah</i> untuk titik, jalur, atau area, lengkap dengan foto berlokasi.</span></p>
+            <p class=step><b>3</b><span><strong>Rekam perjalanan</strong><br>Tekan <i>Rekam</i>. Tetap jalan saat layar dikunci atau TAPAK diminimalkan; notifikasi hijau <i>Sedang tracking</i>, oranye saat <i>Dijeda</i>.</span></p>
+            <p class=step><b>4</b><span><strong>Simpan &amp; cetak</strong><br>Ekspor data (GeoJSON, KMZ, SHP) atau peta berlayout (PDF, PNG, JPEG) lewat <i>Lainnya</i>.</span></p>
+            <p class=mut>Panduan lengkap ada di <i>Lainnya → Cara pakai</i> dan di website kami.</p>
+            <button class="btn btn-o wide" onclick="openExt(TAPAK_CFG.site,'website Spectra CC')"><svg class=ic aria-hidden=true><use href=#i-globe></use></svg>Selengkapnya di website</button>
+            <button class="btn btn-p wide" style="margin-top:10px" onclick=closeWelcome()>Mulai<svg class=ic>
                     <use href=#i-arrow></use>
                 </svg></button>
         </div>
@@ -352,9 +384,10 @@
             <button id=enter class="btn btn-enter" onclick=enterApp()>Jelajahi Peta<svg class=ic aria-hidden=true>
                     <use href=#i-arrow></use>
                 </svg></button>
+            <button id=support class="btn btn-ghost" onclick="openExt(TAPAK_CFG.site,'website Spectra CC')"><svg class=ic aria-hidden=true><use href=#i-heart></use></svg>Dukung Pengembang</button>
         </div>
         <div class=sp-by><small>Dikembangkan oleh</small><span class="logo rev" data-logo></span><em>Science into
-                Sustainable Solutions.</em></div>
+                Sustainable Solutions.</em><span id=appver class=ver></span></div>
         <div class="rule3 rev"></div>
     </div>
     <input type=file id=pdfin accept="application/pdf" hidden onchange="importPDF(this.files[0]);this.value=''">
@@ -367,11 +400,13 @@
     <script src=lib/piexif.js></script>
     <script src=lib/shpwrite.js></script>
     <script src=lib/version.js></script>
+    <script src=config.js></script>
     <script src=lib/mark.js></script>
     <script src=lib/egm96.js></script>
     <script src=georef.js></script>
     <script src=app.js></script>
     <script src=ui.js></script>
+    <script src=extras.js></script>
     <script src=mapexport.js></script>
     <script src=mapexport-ui.js></script>
     <script src=perm.js></script>

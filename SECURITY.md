@@ -2,7 +2,7 @@
 
 ## Versi yang didukung
 
-Hanya rilis terbaru (saat ini **1.4.x**) yang menerima perbaikan keamanan.
+Hanya rilis terbaru (saat ini **1.6.x**) yang menerima perbaikan keamanan.
 
 ## Melaporkan kerentanan
 
@@ -16,7 +16,7 @@ reproduksi, versi TAPAK, dan versi Android. Kami berusaha menanggapi dalam 7 har
 
 - Data (objek, foto, jejak, peta PDF) disimpan **hanya di HP** (IndexedDB). Tidak ada server TAPAK.
 - Rekaman latar belakang berjalan sebagai layanan Android dengan notifikasi permanen; titik jejak hanya disimpan di HP.
-- Satu-satunya koneksi keluar adalah ke server tile peta (OpenStreetMap, OpenTopoMap, Esri) lewat HTTPS.
+- Koneksi keluar hanya ke server tile peta (OpenStreetMap, OpenTopoMap, Esri) dan, saat pengguna mengirim laporan bug/penyalahgunaan, ke Formspree dan hCaptcha (captcha), semuanya lewat HTTPS.
 - Berkas yang diimpor (GeoPDF) diperlakukan tidak tepercaya: ukuran dibatasi, tanda `%PDF-` diperiksa,
   dan pdf.js dijalankan dengan `isEvalSupported:false` (mitigasi CVE-2024-4367).
 - Backup Android dimatikan (`allowBackup=false`) dan lalu lintas HTTP tanpa enkripsi dilarang.

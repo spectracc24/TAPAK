@@ -84,8 +84,9 @@ window.trackUI = function () {
   if ($('#ptrk')) pTrackFill()
 };
 setInterval(trackUI, 1000);
-window.toggleTrack = function () {
-  if (!tracking) { startTrack(); askNotif(); toast('Rekam jejak dimulai.\nTetap jalan saat layar dikunci atau TAPAK diminimalkan.'); trackUI() }
+window.toggleTrack = async function () {
+  // izin notifikasi diminta DULU: notifikasi "Sedang tracking" yang dipasang sebelum izin diberikan tidak akan tampil di bilah status
+  if (!tracking) { await askNotif(); startTrack(); toast('Rekam jejak dimulai.\nTetap jalan saat layar dikunci atau TAPAK diminimalkan.'); trackUI() }
   else pTrack()
 };
 const ivLabel = () => S.trkInt == 'all' ? 'semua fix GPS' : S.trkInt == '30' ? 'setiap 30 detik' : S.trkInt == 'custom' ? `setiap ${S.trkCustom} detik` : 'setiap 2 detik';
@@ -294,6 +295,7 @@ function setS(k, v) {
   if (k == 'theme') applyTheme(v); if (k == 'lbl') applyLbl(); if (k == 'symSize' || k == 'autoJenis') draw(); if (k == 'eleSrc') reEle();
   hud(); trackUI(); re(pSet)
 }
+window.setLblSize = v => { S.lblSize = Math.min(24, Math.max(8, Math.round(+v) || 12)); applyLbl(); const e = $('#lsv'); if (e) e.textContent = S.lblSize + ' px'; clearTimeout(setLblSize.t); setLblSize.t = setTimeout(saveS, 400) };
 function setNum(k, v, lo, hi) { if (v === '' || !isFinite(+v)) return; S[k] = Math.min(hi, Math.max(lo, Math.round(+v))); saveS(); hud() }
 const chp = (k, opts, on) => `<div class=chips>${opts.map(([v, t]) => `<button class="${(on ? on(v) : S[k] === v) ? 'on' : ''}" onclick="setS('${k}',${esc(JSON.stringify(v))})">${t}</button>`).join('')}</div>`;
 const sw = (k, t, sub) => `<label class=sw><span>${t}${sub ? `<small>${sub}</small>` : ''}</span><input type=checkbox ${S[k] ? 'checked' : ''} onchange="setS('${k}',this.checked)"><i></i></label>`;
@@ -305,6 +307,7 @@ window.pSet = () => {
  ${sel('unit', { metric: 'Meter / Kilometer / Hektar', imperial: 'Kaki / Mil / Acre', nautical: 'Mil laut' })}${sel('theme', { auto: 'Tema: ikuti sistem', light: 'Tema: terang', dark: 'Tema: gelap' })}
  <h4>Info di layar</h4>${sw('showEle', 'Elevasi', 'Tampil di kotak koordinat kiri atas')}${sw('showSpd', 'Kecepatan &amp; perkiraan tiba', 'Kecepatan GPS; perkiraan tiba saat menuju titik')}${sw('showGain', 'Kenaikan elevasi saat merekam', 'Total naik tampil di bilah rekaman')}
  <h4>Data di peta</h4><p class=mut style="margin:0 0 4px">Label nama titik</p>${chp('lbl', [['show', 'Tampil'], ['auto', 'Hanya saat zoom dekat'], ['hide', 'Sembunyi']])}
+ <p class=mut style="margin:6px 0 4px">Ukuran font label <b id=lsv>${+S.lblSize || 12} px</b></p><div class=r style="align-items:center"><input type=range min=8 max=24 step=1 value="${+S.lblSize || 12}" oninput="setLblSize(this.value)" aria-label="Ukuran font label"></div>
  <p class=mut style="margin:6px 0 4px">Ukuran simbol titik</p>${chp('symSize', [['s', 'Kecil'], ['m', 'Sedang'], ['l', 'Besar']])}
  ${sw('autoJenis', 'Warna otomatis menurut data “Jenis”', 'Objek dengan isian Jenis yang sama diberi warna sama, kecuali sudah diberi warna manual')}
  <h4>Rekam jejak</h4><p class=mut style="margin:0 0 4px">Interval pencatatan titik</p>${chp('trkInt', [['2', '2 detik'], ['30', '30 detik'], ['all', 'Semua fix'], ['custom', 'Custom']])}
@@ -334,17 +337,17 @@ window.resetS = async () => {
 };
 
 // ---------- menu lainnya, bantuan, tentang ----------
-window.pMenu = () => sheet(`<h3>Lainnya</h3><div class=grid>${T('sliders', 'Pengaturan', 'pSet()')}${T('export', 'Simpan &amp; bagikan data', 'pExport()')}${T('layout', 'Ekspor peta (PDF/PNG/JPEG)', 'pMapExport()')}${T('help', 'Cara pakai', 'pHelp()')}${T('info', 'Tentang TAPAK', 'pAbout()')}</div>
+window.pMenu = () => sheet(`<h3>Lainnya</h3><div class=grid>${T('sliders', 'Pengaturan', 'pSet()')}${T('export', 'Simpan &amp; bagikan data', 'pExport()')}${T('layout', 'Ekspor peta (PDF/PNG/JPEG)', 'pMapExport()')}${T('help', 'Cara pakai', 'pHelp()')}${T('mail', 'Laporkan bug / penyalahgunaan', 'pReport()')}${T('info', 'Tentang TAPAK', 'pAbout()')}</div>
  <p class=foot>TAPAK v${esc(window.APP_VER || '')} · dikembangkan oleh Spectra CC</p>`);
 window.pHelp = () => sheet(`<h3>Cara pakai</h3>
  <h4>Peta tanpa sinyal</h4><p>Peta → Impor peta PDF → pilih berkas GeoPDF dari HP. Tombol <b>Sembunyikan/Tampilkan</b> mengatur peta PDF di layar; lapisan yang disembunyikan diberi label <b>Tersembunyi</b> dan tombol lapisan di peta bertitik.</p>
  <h4>Peta PDF terasa melenceng?</h4><p>Buka Peta dan lihat kartu peta PDF: proyeksi dan galat titik kontrol tertera di sana. Bandingkan dengan peta dasar, atur opasitas, lalu pakai <b>Geser</b> bila perlu kalibrasi.</p>
  <h4>Menandai temuan</h4><p>Tambah → Tandai lokasi saya. Isi nama dan data, pilih warna/bentuk simbol, ambil foto, lalu Simpan. Bila akurasi GPS melebihi batas, TAPAK memberi peringatan lebih dulu.</p>
- <h4>Merekam jalur patroli</h4><p>Tekan Rekam. Tombol <b>Jeda</b> di bilah merah (atau di panel Rekaman) menghentikan pencatatan sementara; jarak selama jeda tidak dihitung. Rekaman <b>tetap berjalan</b> saat layar dikunci atau TAPAK diminimalkan, ditandai notifikasi “TAPAK sedang merekam jejak” di bilah status. Izinkan notifikasi bila diminta. Di HP Xiaomi, Oppo, Vivo, atau Samsung, atur Baterai TAPAK ke “Tanpa batasan”.</p>
+ <h4>Merekam jalur patroli</h4><p>Tekan Rekam. Tombol <b>Jeda</b> di bilah merah (atau di panel Rekaman) menghentikan pencatatan sementara; jarak selama jeda tidak dihitung. Rekaman <b>tetap berjalan</b> saat layar dikunci atau TAPAK diminimalkan, ditandai notifikasi hijau “Sedang tracking” di bilah status (berganti oranye “Track dijeda” saat dijeda, dan hilang saat dihentikan). Izinkan notifikasi bila diminta. Di HP Xiaomi, Oppo, Vivo, atau Samsung, atur Baterai TAPAK ke “Tanpa batasan”.</p>
  <h4>Banyak data di peta</h4><p>Data saya → ikon mata menyembunyikan satu objek; <b>Pilih</b> untuk menyembunyikan, mengubah simbol, mengekspor, atau menghapus beberapa objek sekaligus. Di Pengaturan, label nama bisa disembunyikan dan warna bisa otomatis menurut “Jenis”.</p>
  <h4>Mengukur &amp; menuju titik</h4><p>Tambah → Ukur jarak / Ukur luas. Buka data → Tuju ke sini: jarak, arah, dan selisih elevasi tampil di atas.</p>
  <h4>Menyimpan &amp; mengirim data</h4><p>Lainnya → Simpan &amp; bagikan data: pilih semua atau sebagian objek, format GeoJSON/KMZ/SHP, lalu <b>Simpan ke perangkat</b> atau <b>Bagikan</b>.</p>
- <h4>Ekspor peta (layout cetak)</h4><p>Lainnya → Ekspor peta. Pilih kertas A4/A3/custom (lanskap atau portrait), isi judul, deskripsi, dan nama pembuat, pilih data lapangan, basemap online atau peta PDF, grid koordinat, lalu simpan sebagai PDF, PNG, atau JPEG. Tanpa sinyal, pakai peta PDF sebagai basemap.</p>
+ <h4>Ekspor peta (layout cetak)</h4><p>Lainnya → Ekspor peta. Pilih kertas A4/A3/custom (lanskap atau portrait), isi judul, deskripsi, dan nama pembuat, pilih data lapangan, basemap online atau peta PDF, grid koordinat, ukuran font label, lalu simpan sebagai PDF, PNG, atau JPEG. Tanpa sinyal, pakai peta PDF sebagai basemap. Pengaturan layout bisa disimpan sebagai <b>draft</b> dan diubah lagi nanti; draft yang sudah diekspor otomatis dihapus.</p>\n <h4>Melaporkan bug atau penyalahgunaan</h4><p>Lainnya → Laporkan bug / penyalahgunaan. Pilih jenis laporan, tulis deskripsi, centang captcha, lalu kirim. Butuh internet.</p>
  <h4>Ganti format koordinat</h4><p>Ketuk kotak koordinat di kiri atas, atau lewat Pengaturan.</p>`);
 window.pAbout = () => sheet(`<div class=about>${APPMARK('appmark')}<h3>TAPAK</h3><p class=tg>Teknologi Akuisisi dan Pencatatan Hutan Kita</p><p class=lead>Every Track Tells a Story.<br>Peta, jejak, dan catatan lapangan untuk perlindungan hutan berbasis masyarakat. Bekerja tanpa internet.</p>
  <div class=byline><small>Dikembangkan oleh</small><span class=logo>${LOGO}</span>
@@ -352,13 +355,16 @@ window.pAbout = () => sheet(`<div class=about>${APPMARK('appmark')}<h3>TAPAK</h3
  <p class=foot>Versi ${esc(window.APP_VER || '')} · © 2026 Spectra Citra Cendekia</p></div>`);
 // Splash tidak lagi menutup sendiri: pengguna menekan "Jelajahi Peta". Sambutan pertama kali dan permintaan izin
 // baru muncul setelah itu, supaya tidak tertutup splash.
+// Urutan pertama kali: splash -> persetujuan syarat & privasi -> izin (lokasi, kamera, notifikasi) -> kartu pengenalan fitur (sekali) -> peta.
+// Kali berikutnya: splash -> (izin bila ada yang kurang) -> peta.
 window.enterApp = () => {
   const sp = $('#splash'); if (sp.classList.contains('off')) return;
   sp.classList.add('off');
-  kvg('seen').then(v => {
-    if (!v) setTimeout(() => { $('#welcome').hidden = false }, 350);
-    else setTimeout(() => { if (typeof ensurePerms === 'function') ensurePerms() }, 450);
-  });
+  needConsent().then(need => { if (need) setTimeout(() => { $('#consent').hidden = false }, 350); else setTimeout(startFlow, 450) });
 };
+window.startFlow = () => { window.flowOn = true; if (typeof ensurePerms === 'function') ensurePerms(); else introOnce() };
+// kartu pengenalan fitur: hanya sekali seumur pemakaian, dan hanya bila tidak ada kartu lain yang sedang tampil
+window.introOnce = () => kvg('seen').then(v => { if (!v && $('#welcome').hidden && $('#consent').hidden && $('#splash').classList.contains('off')) $('#welcome').hidden = false });
 window.closeWelcome = () => { $('#welcome').hidden = true; kv.set('seen', 1).catch(() => { }) };
+{ const v = $('#appver'); if (v) v.textContent = 'Versi ' + (window.APP_VER || '') }
 trackUI(); hud();
