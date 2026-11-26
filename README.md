@@ -145,8 +145,6 @@ TAPAK memanfaatkan sejumlah pustaka sumber terbuka (antara lain Leaflet, pdf.js,
 
 **Merek tidak ikut dilisensikan.** Nama TAPAK, logo, dan identitas visual Spectra CC adalah milik Spectra Citra Cendekia dan tidak diberikan lewat lisensi kode. Jika Anda membuat versi turunan, gunakan nama dan identitas visual sendiri.
 
-Untuk pelatihan, penyesuaian, atau kerja sama pengembangan, lihat bagian [Hubungi Kami](#hubungi-kami).
-
 ---
 
 [^geopdf]: **GeoPDF** adalah peta dalam format PDF yang memiliki informasi koordinat geografis (georeferensi), sehingga TAPAK dapat menampilkan posisi GPS Anda di atas peta tersebut. Anda dapat membuat GeoPDF sendiri menggunakan perangkat lunak GIS seperti [QGIS](https://qgis.org/) (gratis) atau [ArcGIS](https://www.arcgis.com/), maupun mendapatkannya dari instansi atau portal penyedia data geospasial. Contoh sumber data peta di Indonesia antara lain [Geoportal BIG](https://onemap.big.go.id/) dan [GeoMap Badan Geologi](https://psg.geologi.esdm.go.id/index.php/layanan-geomap/). Peta PDF biasa yang tidak memiliki informasi georeferensi tidak dapat langsung digunakan sebagai referensi GPS. Saat mengekspor dari QGIS, pastikan opsi georeferensi atau *Geospatial PDF* diaktifkan jika tersedia.
