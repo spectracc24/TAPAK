@@ -38,7 +38,6 @@ Banyak masyarakat lokal belum punya akses ke alat navigasi dan pelacakan spasial
 | **Versi saat ini** | **1.6.1** |
 | **Platform** | Android 7.0 atau lebih baru |
 | **Bahasa** | Indonesia |
-| **Pengembang** | Spectra Citra Cendekia (Spectra CC), Pontianak, Kalimantan Barat |
 
 ---
 
