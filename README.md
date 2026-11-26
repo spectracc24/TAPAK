@@ -133,7 +133,7 @@ Pertanyaan, masukan, kerja sama, atau permintaan pelatihan dan penyesuaian TAPAK
 **<https://spectracc.sbs>** atau email ke **<mail@spectracc.sbs>**
 
 Silakan gunakan halaman kontak di website tersebut.
-Spectra Citra Cendekia (Spectra CC) · Pontianak, Kalimantan Barat, Indonesia.
+Spectra Citra Cendekia (Spectra CC) · Kalimantan Barat, Indonesia.
 
 ---
 
