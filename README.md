@@ -130,7 +130,7 @@ Untuk melaporkan celah keamanan, lihat [SECURITY.md](SECURITY.md).
 
 Pertanyaan, masukan, kerja sama, atau permintaan pelatihan dan penyesuaian TAPAK untuk organisasi Anda:
 
-**<https://spectracc.sbs>**
+**<https://spectracc.sbs>** atau email ke **<mail@spectracc.sbs>**
 
 Silakan gunakan halaman kontak di website tersebut.
 Spectra Citra Cendekia (Spectra CC) · Pontianak, Kalimantan Barat, Indonesia.
