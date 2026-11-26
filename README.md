@@ -97,7 +97,6 @@ Banyak masyarakat lokal belum punya akses ke alat navigasi dan pelacakan spasial
 | **Sensor** | GPS (disarankan) dan kompas; kamera bersifat opsional |
 | **Izin** | Lokasi presisi, kamera, dan notifikasi (Android 13 ke atas) |
 | **Internet** | Tidak wajib. Hanya untuk peta online dan mengirim laporan bug |
-| **Baterai** | Di Xiaomi, Oppo, Vivo, Samsung, dan sejenisnya, atur baterai TAPAK ke “Tanpa batasan” agar rekaman latar belakang stabil |
 
 **Tips pemakaian**
 
