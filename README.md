@@ -1,6 +1,6 @@
 # TAPAK
 
-**Teknologi Akuisisi dan Pencatatan Hutan Kita**
+**Teknologi Akuisisi dan Pencatatan Hutan Kita**  
 *Every Track Tells a Story.*
 
 Aplikasi Android untuk pemetaan, navigasi, dan pencatatan lapangan yang tetap berfungsi tanpa internet.
@@ -46,7 +46,7 @@ Banyak masyarakat lokal belum punya akses ke alat navigasi dan pelacakan spasial
 
 ### 1. Memakai peta, online maupun offline
 
-- **Peta offline dari GeoPDF.** Peta yang Anda siapkan di QGIS atau ArcMap dapat diimpor ke HP. Posisi Anda tampil tepat di atas peta tersebut, lengkap dengan pengaturan transparansi dan geser manual bila perlu kalibrasi.
+- **Peta offline dari GeoPDF[^geopdf].** Peta yang Anda siapkan di QGIS atau ArcGIS dapat diimpor ke HP. Posisi Anda tampil tepat di atas peta tersebut, lengkap dengan pengaturan transparansi dan geser manual bila perlu kalibrasi.
 - **Peta online gratis** (jalan, kontur, citra satelit) saat ada internet.
 - Fitur navigasi dan pemetaan, termasuk **GPS, kompas, dan skala**, selalu tersedia di layar.
 
@@ -109,7 +109,7 @@ Banyak masyarakat lokal belum punya akses ke alat navigasi dan pelacakan spasial
 **Batasan saat ini**
 
 - Belum ada impor GeoJSON, KML, atau SHP.
-- Belum bisa mengedit titik sudut (vertex) setelah objek disimpan.
+- Belum bisa mengedit titik sudut (*vertex*) setelah objek disimpan.
 - Belum diuji di semua merek dan versi Android.
 - Belum dapat mencetak peta (PDF, PNG, JPEG) hasil pemetaan secara langsung.
 
@@ -132,7 +132,7 @@ Pertanyaan, masukan, kerja sama, atau permintaan pelatihan dan penyesuaian TAPAK
 
 **<https://spectracc.sbs>** atau email ke **<mail@spectracc.sbs>**
 
-Silakan gunakan halaman kontak di website tersebut.
+Silakan gunakan halaman kontak di website tersebut.  
 Spectra Citra Cendekia (Spectra CC) · Kalimantan Barat, Indonesia.
 
 ---
@@ -148,3 +148,7 @@ TAPAK memanfaatkan sejumlah pustaka sumber terbuka (antara lain Leaflet, pdf.js,
 **Merek tidak ikut dilisensikan.** Nama TAPAK, logo, dan identitas visual Spectra CC adalah milik Spectra Citra Cendekia dan tidak diberikan lewat lisensi kode. Jika Anda membuat versi turunan, gunakan nama dan identitas visual sendiri.
 
 Untuk pelatihan, penyesuaian, atau kerja sama pengembangan, lihat bagian [Hubungi Kami](#hubungi-kami).
+
+---
+
+[^geopdf]: **GeoPDF** adalah peta dalam format PDF yang memiliki informasi koordinat geografis (georeferensi), sehingga TAPAK dapat menampilkan posisi GPS Anda di atas peta tersebut. Anda dapat membuat GeoPDF sendiri menggunakan perangkat lunak GIS seperti [QGIS](https://qgis.org/) (gratis) atau [ArcGIS](https://www.arcgis.com/), maupun mendapatkannya dari instansi atau portal penyedia data geospasial. Contoh sumber data peta di Indonesia antara lain [Geoportal BIG](https://onemap.big.go.id/) dan [GeoMap Badan Geologi](https://psg.geologi.esdm.go.id/index.php/layanan-geomap/). Peta PDF biasa yang tidak memiliki informasi georeferensi tidak dapat langsung digunakan sebagai referensi GPS. Saat mengekspor dari QGIS, pastikan opsi georeferensi atau *Geospatial PDF* diaktifkan jika tersedia.
