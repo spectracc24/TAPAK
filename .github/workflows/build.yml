@@ -185,5 +185,5 @@ jobs:
 
           "$RUNNER_TEMP/fbt/node_modules/.bin/firebase" appdistribution:distribute "$APK" \
             --app "$FIREBASE_APP_ID" \
-            --groups "patroli-tim" \
+            --groups "tapak-tester" \
             --release-notes-file "$RUNNER_TEMP/notes.txt"
