@@ -118,7 +118,7 @@ Banyak masyarakat lokal belum punya akses ke alat navigasi dan pelacakan spasial
 ## Privasi dan keamanan
 
 - Semua data (objek, foto, jejak, peta) disimpan **hanya di HP Anda**. Tidak ada akun dan tidak ada server TAPAK.
-- Koneksi internet hanya dipakai untuk memuat peta online dan, bila Anda sendiri yang mengirim, laporan bug.
+- Koneksi internet hanya dipakai untuk memuat peta online dan pelaporan bug.
 - Berkas peta yang diimpor diperiksa sebelum dibuka.
 - Cadangan otomatis Android dimatikan agar data lapangan tidak berpindah tanpa sepengetahuan Anda.
 
