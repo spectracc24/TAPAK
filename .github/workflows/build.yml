@@ -148,3 +148,42 @@ jobs:
           path: |
             TAPAK-*.apk
             SHA256SUMS.txt
+      # --- Distribusi ke Firebase App Distribution ---
+      # Hanya untuk tag v* atau run manual. Pemasangan CLI dipisah dari langkah
+      # yang memegang secret, supaya skrip instalasi npm tidak bisa membaca kunci.
+      - name: Pasang Firebase CLI (versi di-pin, tanpa secret)
+        if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
+        run: npm install --no-audit --no-fund --prefix "$RUNNER_TEMP/fbt" firebase-tools@15.34.1
+
+      - name: Distribusi APK ke Firebase App Distribution
+        if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
+        env:
+          FIREBASE_APP_ID: ${{ secrets.FIREBASE_APP_ID }}
+          FIREBASE_SA: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          REF_NAME: ${{ github.ref_name }}
+          COMMIT_SHA: ${{ github.sha }}
+          RUN_NO: ${{ github.run_number }}
+        run: |
+          set -euo pipefail
+
+          # Hanya APK rilis bertanda tangan, bukan versi DEBUG
+          APK=$(ls TAPAK-v*.apk 2>/dev/null | grep -v DEBUG | head -n 1 || true)
+          if [ -z "$APK" ]; then
+            echo "::error::Tidak ada APK rilis bertanda tangan (secret keystore belum diisi?). Distribusi dibatalkan."
+            exit 1
+          fi
+          echo "Mengunggah: $APK"
+
+          # Kunci service account hanya ada di file sementara, dihapus saat selesai
+          CRED="$RUNNER_TEMP/firebase-sa.json"
+          trap 'rm -f "$CRED"' EXIT
+          printf '%s' "$FIREBASE_SA" > "$CRED"
+          export GOOGLE_APPLICATION_CREDENTIALS="$CRED"
+
+          printf 'TAPAK %s (build #%s)\nCommit: %s\n' \
+            "$REF_NAME" "$RUN_NO" "${COMMIT_SHA:0:7}" > "$RUNNER_TEMP/notes.txt"
+
+          "$RUNNER_TEMP/fbt/node_modules/.bin/firebase" appdistribution:distribute "$APK" \
+            --app "$FIREBASE_APP_ID" \
+            --groups "patroli-tim" \
+            --release-notes-file "$RUNNER_TEMP/notes.txt"
