@@ -139,7 +139,7 @@ Spectra Citra Cendekia (Spectra CC) · Kalimantan Barat, Indonesia.
 
 Peta dasar online: © kontributor OpenStreetMap; tampilan kontur © OpenTopoMap (CC-BY-SA); citra: Esri, Maxar, Earthstar Geographics, dan komunitas pengguna GIS.
 
-TAPAK memanfaatkan sejumlah pustaka sumber terbuka (antara lain Leaflet, pdf.js, proj4, JSZip, dan Capacitor), masing-masing dengan lisensinya sendiri. Logo dan identitas visual Spectra CC mengikuti *Brand Identity & Strategic Guideline* v1.0 (Spectra Citra Cendekia, AHU-015113.AH.01.30 Tahun 2025).
+TAPAK memanfaatkan sejumlah pustaka sumber terbuka (antara lain Leaflet, pdf.js, proj4, JSZip, dan Capacitor), masing-masing dengan lisensinya sendiri.
 
 **Lisensi kode TAPAK:** [Apache License 2.0](LICENSE) © 2026 Spectra Citra Cendekia. TAPAK adalah perangkat lunak sumber terbuka (*open-source*): Anda bebas memakai, mempelajari, mengubah, dan membagikannya, termasuk untuk keperluan komersial, dengan tetap mencantumkan hak cipta dan lisensi ini.
 
